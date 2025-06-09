@@ -36,6 +36,7 @@ const meta: Meta<RemoteDatatableComponent<PeriodicElement>> = {
       providers: [{ provide: DataService, useClass: PeriodicElementService }],
     }),
   ],
+  tags: ['autodocs'],
 };
 
 export default meta;

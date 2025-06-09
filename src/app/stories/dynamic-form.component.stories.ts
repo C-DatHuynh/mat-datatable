@@ -7,6 +7,7 @@ import { CheckboxFormControl, MultiSelectFormControl, SelectFormControl, SliderF
 const meta: Meta<DynamicFormComponent> = {
   title: 'Dynamic Form',
   component: DynamicFormComponent,
+  tags: ['autodocs'],
 };
 
 export default meta;
