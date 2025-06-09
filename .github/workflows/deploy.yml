@@ -45,6 +45,6 @@ jobs:
 
       - name: Deploy to GitHub Pages
         id: build-publish
-        uses: bitovi/github-actions-storybook-to-github-pages@v1.0.0
+        uses: bitovi/github-actions-storybook-to-github-pages@v1.0.3
         with:
           path: storybook-static
