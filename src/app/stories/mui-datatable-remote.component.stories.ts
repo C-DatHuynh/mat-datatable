@@ -16,14 +16,17 @@ class PeriodicElementService extends DataService<PeriodicElement> {
   }
 
   add(item: PeriodicElement): Observable<PeriodicElement> {
+    console.log('Adding item:', item);
     throw new Error('Method not implemented.');
   }
 
   update(item: PeriodicElement): Observable<PeriodicElement> {
+    console.log('Updating item:', item);
     throw new Error('Method not implemented.');
   }
 
   remove(id: number): Observable<number> {
+    console.log('Removing item with id:', id);
     throw new Error('Method not implemented.');
   }
 }
