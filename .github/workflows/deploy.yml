@@ -33,7 +33,7 @@ jobs:
         run: npm ci
 
       - name: Build project
-        run: npm run build
+        run: npm run build-storybook
 
       - name: Run Angular lint
         run: npm run lint
