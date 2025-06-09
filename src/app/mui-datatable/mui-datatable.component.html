@@ -1,0 +1,124 @@
+<!-- mui-datatable.component.html -->
+
+<div class="mui-data-table-container" [attr.id]="title()">
+  <div class="mui-datatable-title">
+    <h2>{{ title() }}</h2>
+  </div>
+  <mat-toolbar class="mui-datatable-toolbar">
+    @if (tableOptions().search !== false) {
+      <mat-form-field appearance="fill" class="filter-field" subscriptSizing="dynamic" style="font-size: 12px">
+        <mat-label>Search</mat-label>
+        <input matInput (keyup)="applySearch($event)" [placeholder]="tableOptions().searchPlaceholder" #input />
+      </mat-form-field>
+    }
+    <span class="example-spacer"></span>
+    @for (action of actions(); track action) {
+      <button matIconButton [disabled]="action.disabled" (click)="action.onClick($event)">
+        <mat-icon>{{ action.icon }}</mat-icon>
+        {{ action.label }}
+      </button>
+    }
+  </mat-toolbar>
+
+  @if (dataSource.loading$ | async) {
+    <div class="example-loading-shade">
+      <mat-spinner></mat-spinner>
+    </div>
+  }
+
+  <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z8" multiTemplateDataRows="tableOptions().expandableRows === true">
+    @for (column of columnsToDisplay(); track column) {
+      <ng-container matColumnDef="{{ column.name }}">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header disabled="{{ column.options.sort === false }}">{{ column.label || column.name }}</th>
+        <td mat-cell *matCellDef="let element">{{ element[column.name] }}</td>
+      </ng-container>
+    }
+
+    <!-- Expanded Content Column - The detail row is made up of this one column that spans across all columns -->
+    @if (tableOptions().expandableRows === true) {
+      <ng-container matColumnDef="expand">
+        <th mat-header-cell *matHeaderCellDef aria-label="row actions">&nbsp;</th>
+        <td mat-cell *matCellDef="let element">
+          <button
+            matIconButton
+            aria-label="expand row"
+            (click)="toggle(element); $event.stopPropagation()"
+            class="example-toggle-button"
+            [class.example-toggle-button-expanded]="isExpanded(element)">
+            <mat-icon>keyboard_arrow_down</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="expandedDetail">
+        <td mat-cell *matCellDef="let element" [attr.colspan]="columnNamesToDisplay().length">
+          <div class="example-element-detail-wrapper" [class.example-element-detail-wrapper-expanded]="isExpanded(element)">
+            <div class="example-element-detail">
+              <div class="example-element-diagram">
+                <div class="example-element-position">{{ element.position }}</div>
+                <div class="example-element-symbol">{{ element.symbol }}</div>
+                <div class="example-element-name">{{ element.name }}</div>
+                <div class="example-element-weight">{{ element.weight }}</div>
+              </div>
+              <div class="example-element-description">
+                {{ element.description }}
+                <span class="example-element-description-attribution"> -- Wikipedia </span>
+              </div>
+            </div>
+          </div>
+        </td>
+      </ng-container>
+    }
+
+    @if (rowActions().length > 0) {
+      <ng-container matColumnDef="rowActions">
+        <th mat-header-cell *matHeaderCellDef aria-label="row actions">&nbsp;</th>
+        <td mat-cell *matCellDef="let element; let i = dataIndex">
+          @for (action of rowActions(); track action) {
+            <button matIconButton [disabled]="action.disabled" (click)="onRowActionClicked($event, action, element, i)">
+              <mat-icon>{{ action.icon }}</mat-icon>
+            </button>
+          }
+        </td>
+      </ng-container>
+    }
+
+    <tr mat-header-row *matHeaderRowDef="columnNamesToDisplay()"></tr>
+    <tr
+      mat-row
+      *matRowDef="let element; columns: columnNamesToDisplay()"
+      class="example-element-row"
+      [class.example-expanded-row]="isExpanded(element)"
+      (click)="toggleExpand(element)"></tr>
+
+    @if (tableOptions().expandableRows === true) {
+      <!-- Expanded Content Column - The detail row is made up of this one column that spans across all columns -->
+      <tr mat-row *matRowDef="let row; columns: ['expandedDetail']" class="example-detail-row"></tr>
+    }
+
+    <!-- Row shown when there is no matching data. -->
+    @if ((dataSource.loading$ | async) === false) {
+      <tr class="example-element-row" *matNoDataRow>
+        <td class="mdc-data-table__cell" style="text-align: center" [attr.colspan]="columnNamesToDisplay().length">No data matching the filter</td>
+      </tr>
+    }
+  </table>
+
+  <div class="paginator-container mat-mdc-paginator">
+    @if (tableOptions().jumpToPage === true) {
+      <div class="mat-mdc-paginator-page-size-label">Go to page:</div>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="paginator-page-select">
+        <mat-select [value]="paginator?.pageIndex" (selectionChange)="jumpToPage($event)" hideSingleSelectionIndicator>
+          @for (pageNumber of getPageList(); track pageNumber) {
+            <mat-option [value]="pageNumber - 1">{{ pageNumber }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    }
+    <mat-paginator
+      [pageSizeOptions]="tableOptions().rowsPerPageOptions"
+      [pageSize]="tableOptions().rowsPerPage"
+      showFirstLastButtons
+      aria-label="Select page of periodic elements">
+    </mat-paginator>
+  </div>
+</div>

@@ -1,0 +1,12 @@
+<div>
+  <form (ngSubmit)="onSubmit()" [formGroup]="form" [attr.id]="formId()" (reset)="onReset()">
+    @for (control of controls(); track control) {
+      <div class="form-row">
+        <app-dynamic-form-control [data]="control" [form]="form" />
+      </div>
+    }
+  </form>
+  @if (payLoad) {
+    <div class="form-row"><strong>Saved the following values</strong><br />{{ payLoad }}</div>
+  }
+</div>
