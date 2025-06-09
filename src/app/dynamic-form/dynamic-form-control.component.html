@@ -1,0 +1,69 @@
+<div [formGroup]="form()">
+  @switch (data().controlType) {
+    @case ('textbox') {
+      <mat-form-field>
+        <mat-label [attr.for]="data().key">{{ data().label }}</mat-label>
+        <input
+          [formControlName]="data().key"
+          [id]="data().key"
+          matInput
+          [required]="data().required === true"
+          (blur)="updateErrorMessage()"
+          [type]="data().type" />
+        @if (control?.invalid) {
+          <mat-error>{{ errorMessage() }}</mat-error>
+        }
+      </mat-form-field>
+    }
+    @case ('dropdown') {
+      <mat-form-field>
+        <mat-label [attr.for]="data().key">{{ data().label }}</mat-label>
+        <mat-select [id]="data().key" [formControlName]="data().key" [required]="data().required === true" (blur)="updateErrorMessage()">
+          @for (opt of selectOptions | async; track opt) {
+            <mat-option [value]="opt.key">{{ opt.value }}</mat-option>
+          }
+        </mat-select>
+        @if (control?.invalid) {
+          <mat-error>{{ errorMessage() }}</mat-error>
+        }
+      </mat-form-field>
+    }
+    @case ('multiselect') {
+      <mat-form-field>
+        <mat-label [attr.for]="data().key">{{ data().label }}</mat-label>
+        <mat-select
+          [id]="data().key"
+          [formControlName]="data().key"
+          multiple
+          [attr.required]="data().required === true"
+          (blur)="updateErrorMessage()">
+          @for (opt of selectOptions | async; track opt) {
+            <mat-option [value]="opt.key">{{ opt.value }}</mat-option>
+          }
+        </mat-select>
+        @if (control?.invalid) {
+          <mat-error>{{ errorMessage() }}</mat-error>
+        }
+      </mat-form-field>
+    }
+    @case ('checkbox') {
+      <mat-checkbox [formControlName]="data().key" [id]="data().key">
+        {{ data().label }}
+      </mat-checkbox>
+    }
+    @case ('slider') {
+      <label [attr.for]="data().key">{{ data().label }}</label>
+      <mat-slider showTickMarks discrete>
+        <input
+          matSliderThumb
+          [formControlName]="data().key"
+          [id]="data().key"
+          [max]="data().max"
+          [min]="data().min"
+          [step]="data().step"
+          required="data().required===true"
+          (blur)="updateErrorMessage()" />
+      </mat-slider>
+    }
+  }
+</div>
