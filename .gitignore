@@ -46,5 +46,4 @@ src/stories
 .editorconfig
 
 .vscode
-.storybook
 documentation.json

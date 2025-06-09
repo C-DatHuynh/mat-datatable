@@ -6,6 +6,7 @@ import { ELEMENT_DATA, PeriodicElement } from './fixture';
 const meta: Meta<DataTableComponent<PeriodicElement>> = {
   title: 'Basic MUI Datatable',
   component: DataTableComponent,
+  tags: ['autodocs'],
 };
 
 export default meta;
