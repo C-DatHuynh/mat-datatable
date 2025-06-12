@@ -21,6 +21,7 @@ export const Default: Story = {
       letters: ['A', 'B'],
       active: true,
       age: 30,
+      description: '<p>Default description</p>',
     },
     controlOptions: {
       name: { label: 'Name', controlType: 'textbox', type: 'text' },
@@ -56,6 +57,9 @@ export const Default: Story = {
         max: 50,
         step: 1,
         controlType: 'slider',
+      },
+      description: {
+        controlType: 'richtextbox',
       },
     },
   },
