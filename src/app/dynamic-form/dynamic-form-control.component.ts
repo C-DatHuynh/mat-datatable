@@ -7,7 +7,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSliderModule } from '@angular/material/slider';
-import { QuillModule } from 'ngx-quill';
 import { isObservable, merge, of } from 'rxjs';
 import { CastPipe } from '../pipes';
 import {
@@ -21,17 +20,7 @@ import {
 @Component({
   selector: 'app-dynamic-form-control',
   templateUrl: './dynamic-form-control.component.html',
-  imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatSliderModule,
-    MatCheckbox,
-    QuillModule,
-    CastPipe,
-  ],
+  imports: [CommonModule, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatSliderModule, MatCheckbox, CastPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export default class DynamicFormControlComponent implements OnInit {
