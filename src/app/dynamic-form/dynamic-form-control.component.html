@@ -55,5 +55,8 @@
           (blur)="updateErrorMessage()" />
       </mat-slider>
     }
+    @case ('richtextbox') {
+      <quill-editor [formControl]="control"></quill-editor>
+    }
   }
 </div>

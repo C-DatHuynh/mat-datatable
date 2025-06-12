@@ -13,7 +13,7 @@ export interface SelectOptionType {
   key: string;
   value: Exclude<PrimitiveType, null | undefined>;
 }
-export type FormControlType = 'textbox' | 'dropdown' | 'multiselect' | 'checkbox' | 'richtextbox' | 'slider';
+export type FormControlType = 'textbox' | 'dropdown' | 'multiselect' | 'checkbox' | 'richtextbox' | 'slider' | 'richtextbox';
 
 type FilterLogic = (itemValue: PrimitiveType, filterValue: PrimitiveType | PrimitiveType[], row: object) => boolean; // Custom logic for filtering
 
