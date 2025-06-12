@@ -1,10 +1,10 @@
-import { Component, input, OnInit, output } from '@angular/core';
+import { Component, computed, input, OnInit, output } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { FormValueType } from '../dialog';
 import DynamicFormControlComponent from './dynamic-form-control.component';
-import { FormControlBase } from './form-control-base';
+import { DynamicFormControlOptions } from './form-control-base';
 
 @Component({
   selector: 'app-dynamic-form',
@@ -13,15 +13,18 @@ import { FormControlBase } from './form-control-base';
   standalone: true,
 })
 export default class DynamicFormComponent implements OnInit {
-  readonly controls = input.required<FormControlBase[]>();
-  readonly formId = input<string>();
+  readonly controlOptions = input.required<Record<string, DynamicFormControlOptions>>();
+  readonly formId = input.required<string>();
+  readonly formValue = input.required<FormValueType>();
   readonly handleSubmit = output<FormValueType>();
-  form: FormGroup = new FormGroup({});
+  readonly controlOptionEntries = computed(() => Object.entries(this.controlOptions()));
+
+  private form!: FormGroup;
   initialData = {};
 
   ngOnInit() {
-    this.form = this.toFormGroup(this.controls() as FormControlBase[]);
-    this.initialData = this.form.getRawValue();
+    this.form = this.toFormGroup(this.formValue(), this.controlOptions());
+    this.initialData = this.formValue();
   }
 
   onSubmit() {
@@ -36,10 +39,12 @@ export default class DynamicFormComponent implements OnInit {
     this.form.reset(this.initialData);
   }
 
-  toFormGroup(controls: FormControlBase[]) {
+  toFormGroup(formValue: FormValueType, controlOptions: Record<string, DynamicFormControlOptions>) {
     const group: Record<string, FormControl> = {};
-    controls.forEach(control => {
-      group[control.key as keyof typeof group] = new FormControl(control.value, control.validators);
+    Object.keys(controlOptions).forEach(column => {
+      const options = controlOptions[column];
+      const value = formValue[column];
+      group[column as keyof typeof group] = options.validators ? new FormControl(value, options.validators) : new FormControl(value);
     });
     return new FormGroup(group);
   }

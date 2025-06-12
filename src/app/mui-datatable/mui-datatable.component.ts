@@ -1,6 +1,7 @@
 // mui-datatable.component.ts
 import { CommonModule } from '@angular/common';
 import { Component, ViewChild, OnInit, AfterViewInit, inject, input, computed } from '@angular/core';
+import { Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -13,6 +14,7 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableModule, MatTable } from '@angular/material/table';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { AddEditDialogComponent, ConfirmDeleteDialogComponent, FilterDialogComponent } from '../dialog';
+import { DynamicFormControlOptions } from '../dynamic-form';
 import { Action, ColumnDefinition, DataModel, RowAction, TableOptions } from '../types';
 import { BasicDataSource, RemoteDataSource } from './datasource';
 import { DataService, DataTableService } from './mui-datatable.service';
@@ -47,6 +49,11 @@ const defaultTableOptions: TableOptions = {
   canFilter: true,
   jumpToPage: false,
   selectableRows: 'none',
+};
+
+const defaultControlOption: DynamicFormControlOptions = {
+  controlType: 'textbox',
+  type: 'text',
 };
 
 @Component({
@@ -180,10 +187,20 @@ export class DataTableComponent<TModel extends DataModel> implements OnInit, Aft
 
   openFilterDialog(): void {
     const { formSearch = {} } = this.dataSource.filter ? JSON.parse(this.dataSource.filter) : {};
+    const columnConfig = this.columns()
+      .filter(column => column.options.filter !== false)
+      .reduce(
+        (acc, col) => ({
+          ...acc,
+          [col.name]: col.options.filterOptions ?? defaultControlOption,
+        }),
+        {}
+      );
+    console.log('columnConfig', columnConfig);
     const dialogRef = this.filterDialog.open(FilterDialogComponent, {
       data: {
-        columnConfig: this.dataSource.columns,
-        formValues: formSearch,
+        columnConfig: columnConfig,
+        formValue: formSearch,
         title: 'Filter',
       },
     });
@@ -199,10 +216,17 @@ export class DataTableComponent<TModel extends DataModel> implements OnInit, Aft
   }
 
   openAddEditDialog(item?: TModel, index?: number): void {
+    const columnConfig = this.columns().reduce(
+      (acc, col) => ({
+        ...acc,
+        [col.name]: col.options.editOptions ?? defaultControlOption,
+      }),
+      {}
+    );
     const dialogRef = this.filterDialog.open(AddEditDialogComponent, {
       data: {
-        columnConfig: this.dataSource.columns,
-        formValues: item,
+        columnConfig: columnConfig,
+        formValue: item,
         title: item ? `Edit ${item.name}` : `Add item`,
       },
     });
@@ -219,19 +243,25 @@ export class DataTableComponent<TModel extends DataModel> implements OnInit, Aft
   }
 
   openDeleteConfirmDialog(item: TModel, index: number): void {
+    const columnConfig: Record<string, DynamicFormControlOptions> = {
+      confirm: {
+        label: 'Type "delete" to confirm',
+        controlType: 'textbox',
+        type: 'text',
+        validators: [Validators.required, Validators.pattern(/^delete$/i)],
+      },
+    };
     const dialogRef = this.filterDialog.open(ConfirmDeleteDialogComponent, {
       data: {
         title: `Confirm delete ${item.name}`,
+        columnConfig: columnConfig,
       },
     });
     dialogRef.afterClosed().subscribe(result => {
-      const { confirm } = result;
       if (!result) {
         return;
       }
-      if (confirm?.toLowerCase() === 'delete') {
-        this.dataSource.removeFromDataSource(index);
-      }
+      this.dataSource.removeFromDataSource(index);
     });
   }
 

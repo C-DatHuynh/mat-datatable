@@ -1,6 +1,6 @@
 import { MatTableDataSource } from '@angular/material/table';
 import { BehaviorSubject, catchError, finalize, of } from 'rxjs';
-import { ColumnDefinition, DataModel, FilterPayload, PrimitiveType, SelectOptionType } from '../types';
+import { ColumnDefinition, DataModel, FilterPayload, PrimitiveType } from '../types';
 import { isNonEmpty } from '../utils';
 import { DataService } from './mui-datatable.service';
 
@@ -8,21 +8,12 @@ export class BasicDataSource<TModel extends DataModel> extends MatTableDataSourc
   // Loading state observable
   protected loadingSubject = new BehaviorSubject<boolean>(false);
   public readonly loading$ = this.loadingSubject.asObservable();
-  public columns: ColumnDefinition[] = [];
 
-  constructor(initialData: TModel[], columns: ColumnDefinition[] = []) {
+  constructor(
+    initialData: TModel[],
+    protected readonly columns: ColumnDefinition[]
+  ) {
     super(initialData);
-    this.columns = [...columns];
-    this.updateColumnSelectionOptions(initialData);
-  }
-
-  override set data(data: TModel[]) {
-    super.data = data;
-    this.updateColumnSelectionOptions(data);
-  }
-
-  override get data(): TModel[] {
-    return super.data;
   }
 
   override filterPredicate = (data: TModel, filter: string): boolean => {
@@ -55,31 +46,6 @@ export class BasicDataSource<TModel extends DataModel> extends MatTableDataSourc
     throw new Error('Invalid filter payload');
   };
 
-  private createSelectOptions(columnName: string, data: TModel[], renderLabel?: (value: PrimitiveType) => string): SelectOptionType[] {
-    return data.map(item => {
-      const value = item[columnName as keyof TModel] as PrimitiveType;
-      const key = renderLabel ? renderLabel(value) : value;
-      return { key, value };
-    }) as SelectOptionType[];
-  }
-
-  private updateColumnSelectionOptions(data: TModel[]) {
-    const updateOptions = (key: 'filterOptions' | 'editOptions') => {
-      this.columns
-        .filter(col => col.options[key]?.controlType === 'dropdown' || col.options[key]?.controlType === 'multiselect')
-        .forEach(col => {
-          const opts = col.options[key] ?? {};
-          const { selectOptions, renderLabel } = opts;
-          col.options[key] = {
-            ...opts,
-            selectOptions: selectOptions ?? this.createSelectOptions(col.name, data, renderLabel),
-          };
-        });
-    };
-    updateOptions('filterOptions');
-    updateOptions('editOptions');
-  }
-
   addToDataSource(data: TModel) {
     this.data = [...this.data, data];
   }
@@ -100,10 +66,9 @@ export class BasicDataSource<TModel extends DataModel> extends MatTableDataSourc
 export class RemoteDataSource<TModel extends DataModel, TDto extends TModel = TModel> extends BasicDataSource<TModel> {
   constructor(
     private readonly dataService: DataService<TModel>,
-    columns: ColumnDefinition[]
+    protected override readonly columns: ColumnDefinition[]
   ) {
-    super([]);
-    this.columns = [...columns];
+    super([], columns);
   }
 
   loadAll() {

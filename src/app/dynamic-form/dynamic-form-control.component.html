@@ -1,67 +1,57 @@
 <div [formGroup]="form()">
-  @switch (data().controlType) {
+  @switch (option().controlType || 'textbox') {
     @case ('textbox') {
+      @let data = option() | cast: TextControlOptions;
       <mat-form-field>
-        <mat-label [attr.for]="data().key">{{ data().label }}</mat-label>
-        <input
-          [formControlName]="data().key"
-          [id]="data().key"
-          matInput
-          [required]="data().required === true"
-          (blur)="updateErrorMessage()"
-          [type]="data().type" />
-        @if (control?.invalid) {
+        <mat-label [attr.for]="key()">{{ data.label || key() }}</mat-label>
+        <input [formControlName]="key()" [id]="key()" matInput (blur)="updateErrorMessage()" [type]="data.type" />
+        @if (control.invalid) {
           <mat-error>{{ errorMessage() }}</mat-error>
         }
       </mat-form-field>
     }
     @case ('dropdown') {
       <mat-form-field>
-        <mat-label [attr.for]="data().key">{{ data().label }}</mat-label>
-        <mat-select [id]="data().key" [formControlName]="data().key" [required]="data().required === true" (blur)="updateErrorMessage()">
-          @for (opt of selectOptions | async; track opt) {
+        <mat-label [attr.for]="key()">{{ option().label || key() }}</mat-label>
+        <mat-select [id]="key()" [formControlName]="key()" (blur)="updateErrorMessage()">
+          @for (opt of selectOptions() | async; track opt) {
             <mat-option [value]="opt.key">{{ opt.value }}</mat-option>
           }
         </mat-select>
-        @if (control?.invalid) {
+        @if (control.invalid) {
           <mat-error>{{ errorMessage() }}</mat-error>
         }
       </mat-form-field>
     }
     @case ('multiselect') {
       <mat-form-field>
-        <mat-label [attr.for]="data().key">{{ data().label }}</mat-label>
-        <mat-select
-          [id]="data().key"
-          [formControlName]="data().key"
-          multiple
-          [attr.required]="data().required === true"
-          (blur)="updateErrorMessage()">
-          @for (opt of selectOptions | async; track opt) {
+        <mat-label [attr.for]="key()">{{ option().label || key() }}</mat-label>
+        <mat-select [id]="key()" [formControlName]="key()" multiple (blur)="updateErrorMessage()">
+          @for (opt of selectOptions() | async; track opt) {
             <mat-option [value]="opt.key">{{ opt.value }}</mat-option>
           }
         </mat-select>
-        @if (control?.invalid) {
+        @if (control.invalid) {
           <mat-error>{{ errorMessage() }}</mat-error>
         }
       </mat-form-field>
     }
     @case ('checkbox') {
-      <mat-checkbox [formControlName]="data().key" [id]="data().key">
-        {{ data().label }}
+      <mat-checkbox [formControlName]="key()" [id]="key()">
+        {{ option().label || key() }}
       </mat-checkbox>
     }
     @case ('slider') {
-      <label [attr.for]="data().key">{{ data().label }}</label>
+      @let data = option() | cast: SliderControlOptions;
+      <label [attr.for]="key()">{{ option().label || key() }}</label>
       <mat-slider showTickMarks discrete>
         <input
           matSliderThumb
-          [formControlName]="data().key"
-          [id]="data().key"
-          [max]="data().max"
-          [min]="data().min"
-          [step]="data().step"
-          required="data().required===true"
+          [formControlName]="key()"
+          [id]="key()"
+          [max]="data.max"
+          [min]="data.min"
+          [step]="data.step"
           (blur)="updateErrorMessage()" />
       </mat-slider>
     }
