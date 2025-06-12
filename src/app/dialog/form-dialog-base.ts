@@ -16,7 +16,7 @@ export interface FormDialogData {
 }
 
 @Directive()
-export abstract class FormDialogComponent {
+export class FormDialogComponent {
   readonly formId: string = 'formDialog';
   readonly formOptions!: Record<string, DynamicFormControlOptions>;
   readonly formValue!: FormValueType;
