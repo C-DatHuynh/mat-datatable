@@ -18,10 +18,6 @@ export interface TextboxControlOptions extends DynamicFormControlOptionBase {
   controlType: 'textbox';
 }
 
-export interface RichTextboxControlOptions extends DynamicFormControlOptionBase {
-  controlType: 'richtextbox';
-}
-
 export interface SelectControlOptions extends DynamicFormControlOptionBase {
   selectOptions: SelectOptionType[] | Observable<SelectOptionType[]>;
   controlType: 'dropdown';
@@ -47,7 +43,6 @@ export interface SliderControlOptions extends DynamicFormControlOptionBase {
 
 export type DynamicFormControlOptions =
   | TextboxControlOptions
-  | RichTextboxControlOptions
   | SelectControlOptions
   | MultiSelectControlOptions
   | CheckboxControlOptions
