@@ -1,4 +1,5 @@
 import { ValidatorFn } from '@angular/forms';
+import { QuillConfig } from 'ngx-quill';
 import { Observable } from 'rxjs';
 import { FormControlType, SelectOptionType } from '../types';
 
@@ -16,6 +17,10 @@ export interface DynamicFormControlOptionBase {
 export interface TextboxControlOptions extends DynamicFormControlOptionBase {
   type: InputType;
   controlType: 'textbox';
+}
+
+export interface RichTextboxControlOptions extends DynamicFormControlOptionBase, QuillConfig {
+  controlType: 'richtextbox';
 }
 
 export interface SelectControlOptions extends DynamicFormControlOptionBase {
@@ -43,6 +48,7 @@ export interface SliderControlOptions extends DynamicFormControlOptionBase {
 
 export type DynamicFormControlOptions =
   | TextboxControlOptions
+  | RichTextboxControlOptions
   | SelectControlOptions
   | MultiSelectControlOptions
   | CheckboxControlOptions
