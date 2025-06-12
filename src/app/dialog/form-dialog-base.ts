@@ -4,31 +4,31 @@ import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { DynamicFormComponent } from '../dynamic-form';
-import { FormControlBase } from '../dynamic-form/form-control-base';
-import { ColumnDefinition, PrimitiveType } from '../types';
+import { DynamicFormControlOptions } from '../dynamic-form/form-control-base';
+import { PrimitiveType } from '../types';
 
 export type FormValueType = Record<string, PrimitiveType | PrimitiveType[]>;
 
 export interface FormDialogData {
   title: string;
-  formValues: FormValueType;
-  columnConfig: ColumnDefinition[];
+  formValue: FormValueType;
+  columnConfig: Record<string, DynamicFormControlOptions>;
 }
 
 @Directive()
-export abstract class FormDialogComponent {
+export class FormDialogComponent {
   readonly formId: string = 'formDialog';
-  readonly formControls: FormControlBase[] = [];
-  readonly title: string = '';
+  readonly formOptions!: Record<string, DynamicFormControlOptions>;
+  readonly formValue!: FormValueType;
+  readonly title!: string;
   constructor(
     protected readonly dialogRef: MatDialogRef<FormDialogData, FormValueType>,
     @Inject(MAT_DIALOG_DATA) protected readonly data: FormDialogData
   ) {
-    this.formControls = this.toFormControls(data);
+    this.formOptions = data.columnConfig;
+    this.formValue = data.formValue || {};
     this.title = data.title;
   }
-
-  abstract toFormControls(data: FormDialogData): FormControlBase[];
 
   onSubmit(data: FormValueType) {
     this.dialogRef.close(data);

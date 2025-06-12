@@ -1,5 +1,6 @@
 import { ValidatorFn } from '@angular/forms';
 import { Observable } from 'rxjs';
+import { DynamicFormControlOptions } from './dynamic-form';
 
 export interface ColumnDefinition {
   name: string;
@@ -12,13 +13,13 @@ export interface SelectOptionType {
   key: string;
   value: Exclude<PrimitiveType, null | undefined>;
 }
-export type FormControlType = 'textbox' | 'dropdown' | 'multiselect' | 'checkbox' | 'slider';
+export type FormControlType = 'textbox' | 'dropdown' | 'multiselect' | 'checkbox' | 'richtextbox' | 'slider';
+
+type FilterLogic = (itemValue: PrimitiveType, filterValue: PrimitiveType | PrimitiveType[], row: object) => boolean; // Custom logic for filtering
 
 export interface ColumnSubOptions {
   order?: number; // Order of the filter in the UI
   fullWidth?: boolean; // Full width for dropdown or multiselect
-  renderLabel?: (value: PrimitiveType) => string; // Function to render label in the filter dropdown or multiselect
-  logic?: (itemValue: PrimitiveType, filterValue: PrimitiveType | PrimitiveType[], row: object) => boolean; // Custom logic for filtering
   selectOptions?: SelectOptionType[] | Observable<SelectOptionType[]>;
   controlType?: FormControlType;
 }
@@ -27,10 +28,10 @@ export interface ColumnOptions {
   display?: boolean;
   editable?: boolean;
   filter?: boolean;
-  filterOptions?: ColumnSubOptions;
-  editOptions?: ColumnSubOptions;
+  filterOptions?: DynamicFormControlOptions & { logic?: FilterLogic }; // Custom logic for filtering
+  editOptions?: DynamicFormControlOptions;
   sort?: boolean;
-  validators?: ValidatorFn | ValidatorFn[] | ((value: PrimitiveType, row: object) => boolean);
+  validators?: ValidatorFn | ValidatorFn[]; //| ((value: PrimitiveType, row: object) => boolean);
 }
 
 export interface Action {
