@@ -45,6 +45,7 @@ export const Default: Story = {
           { key: 'F', value: 'F' },
         ],
         controlType: 'multiselect',
+        fullWidth: true,
       },
       active: {
         label: 'Is Active',
@@ -60,6 +61,7 @@ export const Default: Story = {
       },
       description: {
         controlType: 'richtextbox',
+        fullWidth: true,
       },
     },
   },
