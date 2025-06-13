@@ -9,6 +9,7 @@ import { DynamicFormControlOptions } from './form-control-base';
 @Component({
   selector: 'app-dynamic-form',
   templateUrl: './dynamic-form.component.html',
+  styleUrls: ['./dynamic-form.component.scss'],
   imports: [DynamicFormControlComponent, ReactiveFormsModule, MatCardModule, MatButtonModule],
   standalone: true,
 })
