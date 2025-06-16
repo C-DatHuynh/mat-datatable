@@ -1,4 +1,4 @@
-<div>
+<div [formGroup]="form()">
   @switch (option().controlType || 'textbox') {
     @case ('textbox') {
       @let data = option() | cast: TextControlOptions;

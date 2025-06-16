@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, input, ChangeDetectionStrategy, OnInit, DestroyRef, inject, signal, computed } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ReactiveFormsModule, FormControl } from '@angular/forms';
+import { ReactiveFormsModule, FormControl, FormGroup } from '@angular/forms';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -44,7 +44,11 @@ export default class DynamicFormControlComponent implements OnInit {
 
   readonly key = input.required<string>();
 
-  readonly control = input.required<FormControl>();
+  readonly form = input.required<FormGroup>();
+
+  readonly control = computed(() => {
+    return this.form().get(this.key()) as FormControl;
+  });
 
   readonly errorMessage = signal('');
 
