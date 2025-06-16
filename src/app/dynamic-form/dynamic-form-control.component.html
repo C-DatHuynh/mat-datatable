@@ -1,11 +1,11 @@
-<div [formGroup]="form()">
+<div>
   @switch (option().controlType || 'textbox') {
     @case ('textbox') {
       @let data = option() | cast: TextControlOptions;
       <mat-form-field>
         <mat-label [attr.for]="key()">{{ data.label || key() }}</mat-label>
         <input [formControlName]="key()" [id]="key()" matInput (blur)="updateErrorMessage()" [type]="data.type" />
-        @if (control.invalid) {
+        @if (control().invalid) {
           <mat-error>{{ errorMessage() }}</mat-error>
         }
       </mat-form-field>
@@ -18,7 +18,7 @@
             <mat-option [value]="opt.key">{{ opt.value }}</mat-option>
           }
         </mat-select>
-        @if (control.invalid) {
+        @if (control().invalid) {
           <mat-error>{{ errorMessage() }}</mat-error>
         }
       </mat-form-field>
@@ -31,7 +31,7 @@
             <mat-option [value]="opt.key">{{ opt.value }}</mat-option>
           }
         </mat-select>
-        @if (control.invalid) {
+        @if (control().invalid) {
           <mat-error>{{ errorMessage() }}</mat-error>
         }
       </mat-form-field>
@@ -56,7 +56,7 @@
       </mat-slider>
     }
     @case ('richtextbox') {
-      <quill-editor [formControl]="control"></quill-editor>
+      <quill-editor [formControl]="control()"></quill-editor>
     }
   }
 </div>

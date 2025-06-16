@@ -20,7 +20,7 @@ export default class DynamicFormComponent implements OnInit {
   readonly handleSubmit = output<FormValueType>();
   readonly controlOptionEntries = computed(() => Object.entries(this.controlOptions()));
 
-  private form!: FormGroup;
+  form!: FormGroup;
   initialData = {};
 
   ngOnInit() {
@@ -48,5 +48,9 @@ export default class DynamicFormComponent implements OnInit {
       group[column as keyof typeof group] = options.validators ? new FormControl(value, options.validators) : new FormControl(value);
     });
     return new FormGroup(group);
+  }
+
+  getFormControl(key: string): FormControl {
+    return this.form.get(key) as FormControl;
   }
 }
