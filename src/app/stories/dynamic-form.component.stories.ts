@@ -22,6 +22,7 @@ export const Default: Story = {
       active: true,
       age: 30,
       description: '<p>Default description</p>',
+      upload: null,
     },
     controlOptions: {
       name: { label: 'Name', controlType: 'textbox', type: 'text' },
@@ -49,7 +50,6 @@ export const Default: Story = {
       },
       active: {
         label: 'Is Active',
-        value: true,
         controlType: 'checkbox',
       },
       age: {
@@ -62,6 +62,11 @@ export const Default: Story = {
       description: {
         controlType: 'richtextbox',
         fullWidth: true,
+      },
+      upload: {
+        label: 'File Upload',
+        controlType: 'upload',
+        accept: '.txt,.pdf',
       },
     },
   },

@@ -49,8 +49,4 @@ export default class DynamicFormComponent implements OnInit {
     });
     return new FormGroup(group);
   }
-
-  getFormControl(key: string): FormControl {
-    return this.form.get(key) as FormControl;
-  }
 }

@@ -34,16 +34,19 @@ export interface MultiSelectControlOptions extends DynamicFormControlOptionBase 
 }
 
 export interface CheckboxControlOptions extends DynamicFormControlOptionBase {
-  value?: boolean;
   controlType: 'checkbox';
 }
 
 export interface SliderControlOptions extends DynamicFormControlOptionBase {
-  value?: number;
   min: number;
   max: number;
   step: number;
   controlType: 'slider';
+}
+
+export interface UploadControlOptions extends DynamicFormControlOptionBase {
+  accept?: string; // Accepted file types
+  controlType: 'upload';
 }
 
 export type DynamicFormControlOptions =
@@ -52,4 +55,5 @@ export type DynamicFormControlOptions =
   | SelectControlOptions
   | MultiSelectControlOptions
   | CheckboxControlOptions
-  | SliderControlOptions;
+  | SliderControlOptions
+  | UploadControlOptions;

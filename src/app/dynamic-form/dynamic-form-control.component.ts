@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, input, ChangeDetectionStrategy, OnInit, DestroyRef, inject, signal, computed } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ReactiveFormsModule, FormControl } from '@angular/forms';
+import { ReactiveFormsModule, FormControl, FormGroup } from '@angular/forms';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -10,9 +10,11 @@ import { MatSliderModule } from '@angular/material/slider';
 import { QuillModule } from 'ngx-quill';
 import { isObservable, merge, of } from 'rxjs';
 import { CastPipe } from '../pipes';
+import { FileUploadComponent } from './file-upload.component';
 import {
   DynamicFormControlOptions,
   SliderControlOptions,
+  UploadControlOptions,
   type MultiSelectControlOptions,
   type SelectControlOptions,
   type TextboxControlOptions,
@@ -31,6 +33,7 @@ import {
     MatCheckbox,
     CastPipe,
     QuillModule,
+    FileUploadComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -39,12 +42,17 @@ export default class DynamicFormControlComponent implements OnInit {
   readonly MultiSelectControlOptions!: MultiSelectControlOptions;
   readonly TextControlOptions!: TextboxControlOptions;
   readonly SliderControlOptions!: SliderControlOptions;
+  readonly UploadControlOptions!: UploadControlOptions;
 
   readonly option = input.required<DynamicFormControlOptions>();
 
   readonly key = input.required<string>();
 
-  readonly control = input.required<FormControl>();
+  readonly form = input.required<FormGroup>();
+
+  readonly control = computed(() => {
+    return this.form().get(this.key()) as FormControl;
+  });
 
   readonly errorMessage = signal('');
 
