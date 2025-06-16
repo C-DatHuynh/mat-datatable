@@ -7,7 +7,7 @@ import { DynamicFormComponent } from '../dynamic-form';
 import { DynamicFormControlOptions } from '../dynamic-form/form-control-base';
 import { PrimitiveType } from '../types';
 
-export type FormValueType = Record<string, PrimitiveType | PrimitiveType[]>;
+export type FormValueType = Record<string, PrimitiveType | PrimitiveType[] | File | File[]>;
 
 export interface FormDialogData {
   title: string;
