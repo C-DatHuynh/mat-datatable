@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, input, ChangeDetectionStrategy, OnInit, DestroyRef, inject, signal, computed } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormGroup, ReactiveFormsModule, FormControl } from '@angular/forms';
+import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -44,13 +44,11 @@ export default class DynamicFormControlComponent implements OnInit {
 
   readonly key = input.required<string>();
 
-  readonly form = input.required<FormGroup>();
+  readonly control = input.required<FormControl>();
 
   readonly errorMessage = signal('');
 
   private readonly destroyRef = inject(DestroyRef);
-
-  control!: FormControl;
 
   readonly selectOptions = computed(() => {
     const { selectOptions = [] } = this.option() as SelectControlOptions | MultiSelectControlOptions;
@@ -58,15 +56,13 @@ export default class DynamicFormControlComponent implements OnInit {
   });
 
   ngOnInit() {
-    const key = this.key();
-    this.control = this.form().get(key) as FormControl;
-    merge(this.control.statusChanges, this.control.valueChanges)
+    merge(this.control().statusChanges, this.control().valueChanges)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.updateErrorMessage());
   }
 
   updateErrorMessage() {
-    if (this.control.hasError('required')) {
+    if (this.control().hasError('required')) {
       this.errorMessage.set('You must enter a value');
     } else {
       this.errorMessage.set('');
