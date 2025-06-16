@@ -10,9 +10,11 @@ import { MatSliderModule } from '@angular/material/slider';
 import { QuillModule } from 'ngx-quill';
 import { isObservable, merge, of } from 'rxjs';
 import { CastPipe } from '../pipes';
+import { FileUploadComponent } from './file-upload.component';
 import {
   DynamicFormControlOptions,
   SliderControlOptions,
+  UploadControlOptions,
   type MultiSelectControlOptions,
   type SelectControlOptions,
   type TextboxControlOptions,
@@ -31,6 +33,7 @@ import {
     MatCheckbox,
     CastPipe,
     QuillModule,
+    FileUploadComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -39,6 +42,7 @@ export default class DynamicFormControlComponent implements OnInit {
   readonly MultiSelectControlOptions!: MultiSelectControlOptions;
   readonly TextControlOptions!: TextboxControlOptions;
   readonly SliderControlOptions!: SliderControlOptions;
+  readonly UploadControlOptions!: UploadControlOptions;
 
   readonly option = input.required<DynamicFormControlOptions>();
 

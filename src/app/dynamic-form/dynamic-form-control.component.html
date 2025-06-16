@@ -58,5 +58,9 @@
     @case ('richtextbox') {
       <quill-editor [formControl]="control()"></quill-editor>
     }
+    @case ('upload') {
+      @let data = option() | cast: UploadControlOptions;
+      <app-file-upload [id]="key()" [option]="data" [formControlName]="key()"></app-file-upload>
+    }
   }
 </div>
