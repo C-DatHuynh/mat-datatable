@@ -11,7 +11,8 @@ export class CastPipe implements PipeTransform {
    * Cast (input: unknown) into (T: Type) using Generics.
    * @param input (unknown) obtained from input type.
    */
-  transform<T>(input: T): T {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  transform<T>(input: unknown, _: T): T {
     return input as T;
   }
 }
