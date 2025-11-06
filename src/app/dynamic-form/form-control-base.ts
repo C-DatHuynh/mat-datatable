@@ -1,7 +1,8 @@
 import { ValidatorFn } from '@angular/forms';
 import { QuillConfig } from 'ngx-quill';
 import { Observable } from 'rxjs';
-import { FormControlType, SelectOptionType } from '../types';
+import { FormControlType } from '../interfaces';
+import { SelectOptionType } from '../types';
 
 type InputType = 'text' | 'tel' | 'email' | 'password' | 'url';
 

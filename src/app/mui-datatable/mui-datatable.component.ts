@@ -1,6 +1,8 @@
 // mui-datatable.component.ts
 import { CommonModule } from '@angular/common';
-import { Component, ViewChild, OnInit, AfterViewInit, inject, input, computed } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Component, ViewChild, OnInit, AfterViewInit, inject, input, computed, Inject, OnDestroy, effect, signal } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
 import { Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
@@ -11,13 +13,14 @@ import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule, MatSelect } from '@angular/material/select';
 import { MatSort, MatSortModule } from '@angular/material/sort';
-import { MatTableModule, MatTable } from '@angular/material/table';
+import { MatTableModule, MatTable, MatTableDataSource } from '@angular/material/table';
 import { MatToolbarModule } from '@angular/material/toolbar';
+import { catchError, finalize, merge, Observable, of, startWith, Subject, switchMap, takeUntil } from 'rxjs';
 import { AddEditDialogComponent, ConfirmDeleteDialogComponent, FilterDialogComponent } from '../dialog';
 import { DynamicFormControlOptions } from '../dynamic-form';
-import { Action, ColumnDefinition, DataModel, RowAction, TableOptions } from '../types';
-import { BasicDataSource, RemoteDataSource } from './datasource';
-import { DataService, DataTableService } from './mui-datatable.service';
+import { Action, ColumnDefinition, RowAction, TableOptions } from '../interfaces';
+import { API_SERVICE_TOKEN, ApiService, DataStoreService, DataTableService, NotificationService } from '../services';
+import { DataModel } from '../types';
 
 const SHARE_IMPORTS = [
   CommonModule,
@@ -35,6 +38,7 @@ const SHARE_IMPORTS = [
 ];
 
 const defaultTableOptions: TableOptions = {
+  remote: false,
   searchPlaceholder: 'Type to filter...',
   rowsPerPageOptions: [5, 10, 25],
   expandableRows: true,
@@ -62,11 +66,10 @@ const defaultControlOption: DynamicFormControlOptions = {
   styleUrls: ['./mui-datatable.component.scss'],
   standalone: true,
   imports: SHARE_IMPORTS,
-  providers: [DataTableService],
+  providers: [DataTableService, DataStoreService, HttpClient],
 })
-export class DataTableComponent<TModel extends DataModel> implements OnInit, AfterViewInit {
-  readonly dataTableService = inject(DataTableService<TModel>);
-  readonly data = input<TModel[]>([]);
+export class DataTableComponent<TModel extends DataModel> implements OnInit, OnDestroy, AfterViewInit {
+  readonly data = input<TModel[]>();
   readonly title = input.required<string>();
   readonly columns = input.required<ColumnDefinition[]>();
   readonly options = input.required<TableOptions>();
@@ -74,7 +77,7 @@ export class DataTableComponent<TModel extends DataModel> implements OnInit, Aft
     ...defaultTableOptions,
     ...this.options(),
   }));
-  readonly columnsToDisplay = computed(() => this.columns().filter(col => col.options.display !== false));
+  readonly columnsToDisplay = computed(() => this.columns().filter(col => col.display !== false));
   readonly columnNamesToDisplay = computed(() => [
     ...(this.tableOptions().expandableRows === true ? ['expand'] : []),
     ...this.columnsToDisplay().map(col => col.name),
@@ -113,7 +116,6 @@ export class DataTableComponent<TModel extends DataModel> implements OnInit, Aft
     }
     return [...allActions, ...customActions];
   });
-
   readonly rowActions = computed(() => {
     const allActions: RowAction[] = [];
     const getTrueIndex = (index: number) => {
@@ -138,22 +140,148 @@ export class DataTableComponent<TModel extends DataModel> implements OnInit, Aft
     return [...customRowActions, ...allActions];
   });
 
+  private destroy$ = new Subject<void>();
+  error = signal<string | null>(null).asReadonly();
+  loading = signal<boolean>(false).asReadonly();
+  filterChange$ = new Observable<any>();
+
+  constructor(
+    @Inject(API_SERVICE_TOKEN) private readonly apiService: ApiService<TModel>,
+    private readonly dataTableService: DataTableService<TModel>,
+    private readonly dataStoreService: DataStoreService<TModel>,
+    private readonly notificationService: NotificationService,
+    private readonly dialogService: MatDialog
+  ) {
+    this.subscribeToState();
+  }
+
   @ViewChild(MatSort) sort!: MatSort;
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatTable) table!: MatTable<TModel>;
   @ViewChild(MatInput) searchInput!: MatInput;
-  filterDialog = inject(MatDialog);
 
-  protected dataSource!: BasicDataSource<TModel>;
+  dataSource = new MatTableDataSource<TModel>([]);
   expandedElement!: TModel | null;
 
   ngOnInit(): void {
-    this.dataSource = new BasicDataSource<TModel>(this.data(), this.columns());
+    this.loadInitialData();
   }
 
   ngAfterViewInit(): void {
-    this.dataSource.sort = this.sort;
-    this.dataSource.paginator = this.paginator;
+    this.setupTable();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private setupTable(): void {
+    if (this.tableOptions().remote) {
+      this.filterChange$.subscribe(() => this.jumpToPage({ value: 0 } as MatSelect));
+
+      // Subscribe to sorting changes
+      this.sort.sortChange.subscribe(() => this.jumpToPage({ value: 0 } as MatSelect));
+
+      merge(this.sort.sortChange, this.paginator.page, this.filterChange$)
+        .pipe(
+          startWith({}), // initial load
+          switchMap(() => {
+            this.dataStoreService.setLoading(true);
+            this.dataStoreService.clearError();
+            return this.apiService
+              .listRemote(
+                {
+                  page: this.paginator.pageIndex || 0,
+                  pageSize: this.paginator.pageSize || 10,
+                },
+                {},
+                { column: this.sort.active, direction: this.sort.direction as 'asc' | 'desc' }
+              )
+              .pipe(
+                catchError(err => {
+                  this.dataStoreService.setError(err?.message || 'Failed to load data.');
+                  console.error(err);
+                  return of({ data: [], total: 0 }); // empty data on error
+                }),
+                // <- finalize is INSIDE the inner observable so it runs after each request
+                finalize(() => this.dataStoreService.setLoading(false))
+              );
+          }),
+          takeUntil(this.destroy$)
+        )
+        .subscribe(({ data, total }) => {
+          this.dataStoreService.setData(data);
+          this.paginator.length = total; // Update total length
+        });
+    } else {
+      this.dataSource.sort = this.sort;
+      this.dataSource.paginator = this.paginator;
+    }
+    // Subscribe to pagination
+    this.paginator.page.subscribe(pageEvent => {
+      this.dataStoreService.setPagination({
+        page: pageEvent.pageIndex + 1,
+        pageSize: pageEvent.pageSize,
+        total: pageEvent.length,
+        totalPages: Math.ceil(pageEvent.length / pageEvent.pageSize),
+      });
+    });
+  }
+
+  private subscribeToState(): void {
+    effect(() => {
+      const filteredData = this.dataStoreService.filteredData();
+      const inputData = this.data();
+      if (inputData) {
+        this.updateTableData(inputData);
+      } else {
+        this.updateTableData(filteredData);
+      }
+    });
+    this.filterChange$ = toObservable(this.dataStoreService.filters);
+
+    // Subscribe to loading state
+    this.loading = this.dataStoreService.loading;
+
+    // Subscribe to error
+    this.error = this.dataStoreService.error;
+  }
+
+  private updateTableData(data: TModel[]): void {
+    console.log('Updating table data', data);
+    const tableData: TModel[] = data.filter(resource => resource && resource.id); // Filter out null/undefined resources
+    this.dataSource.data = tableData;
+  }
+
+  private loadInitialData(): void {
+    const inputData = this.data();
+    if (inputData) {
+      this.dataStoreService.setData(inputData);
+      return;
+    }
+    // Set loading state in RSS store
+    this.dataStoreService.setLoading(true);
+
+    if (this.tableOptions().remote) {
+      return; // Remote data will be loaded via setupTable
+    }
+
+    // Load resources
+    this.apiService
+      .list()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (resources: TModel[]) => {
+          this.dataStoreService.setData(resources);
+          this.dataStoreService.setLoading(false);
+        },
+        error: error => {
+          this.dataStoreService.setLoading(false);
+          this.dataStoreService.setError(error.message || 'Failed to load resources');
+          //this.notificationService.handleApiError(error, 'Loading Resources');
+        },
+      });
   }
 
   applySearch(event: Event): void {
@@ -188,16 +316,15 @@ export class DataTableComponent<TModel extends DataModel> implements OnInit, Aft
   openFilterDialog(): void {
     const { formSearch = {} } = this.dataSource.filter ? JSON.parse(this.dataSource.filter) : {};
     const columnConfig = this.columns()
-      .filter(column => column.options.filter !== false)
+      .filter(column => column.filter !== false)
       .reduce(
         (acc, col) => ({
           ...acc,
-          [col.name]: col.options.filterOptions ?? defaultControlOption,
+          [col.name]: col.filterOptions ?? defaultControlOption,
         }),
         {}
       );
-    console.log('columnConfig', columnConfig);
-    const dialogRef = this.filterDialog.open(FilterDialogComponent, {
+    const dialogRef = this.dialogService.open(FilterDialogComponent, {
       data: {
         columnConfig: columnConfig,
         formValue: formSearch,
@@ -219,11 +346,11 @@ export class DataTableComponent<TModel extends DataModel> implements OnInit, Aft
     const columnConfig = this.columns().reduce(
       (acc, col) => ({
         ...acc,
-        [col.name]: col.options.editOptions ?? defaultControlOption,
+        [col.name]: col.editOptions ?? defaultControlOption,
       }),
       {}
     );
-    const dialogRef = this.filterDialog.open(AddEditDialogComponent, {
+    const dialogRef = this.dialogService.open(AddEditDialogComponent, {
       data: {
         columnConfig: columnConfig,
         formValue: item,
@@ -235,9 +362,9 @@ export class DataTableComponent<TModel extends DataModel> implements OnInit, Aft
         return;
       }
       if (index !== undefined) {
-        this.dataSource.updateInDataSource(result, index);
+        //this.dataSource.updateInDataSource(result, index);
       } else {
-        this.dataSource.addToDataSource(result);
+        //this.dataSource.addToDataSource(result);
       }
     });
   }
@@ -251,7 +378,7 @@ export class DataTableComponent<TModel extends DataModel> implements OnInit, Aft
         validators: [Validators.required, Validators.pattern(/^delete$/i)],
       },
     };
-    const dialogRef = this.filterDialog.open(ConfirmDeleteDialogComponent, {
+    const dialogRef = this.dialogService.open(ConfirmDeleteDialogComponent, {
       data: {
         title: `Confirm delete ${item.name}`,
         columnConfig: columnConfig,
@@ -261,7 +388,7 @@ export class DataTableComponent<TModel extends DataModel> implements OnInit, Aft
       if (!result) {
         return;
       }
-      this.dataSource.removeFromDataSource(index);
+      //this.dataSource.removeFromDataSource(index);
     });
   }
 
@@ -270,29 +397,11 @@ export class DataTableComponent<TModel extends DataModel> implements OnInit, Aft
     if (!numberOfPages) {
       return [];
     }
-    return Array.from({ length: numberOfPages }, (_, i) => i + 1);
+    return Array.from({ length: numberOfPages }, (_, i) => i);
   }
 
   onRowActionClicked(event: Event, action: RowAction, item: TModel, index: number): void {
     event.stopPropagation();
     action.onClick(item, index);
-  }
-}
-
-@Component({
-  selector: 'app-mui-datatable-remote',
-  templateUrl: './mui-datatable.component.html',
-  styleUrls: ['./mui-datatable.component.scss'],
-  standalone: true,
-  imports: SHARE_IMPORTS,
-  providers: [DataTableService],
-})
-export class RemoteDatatableComponent<TModel extends DataModel> extends DataTableComponent<TModel> implements OnInit {
-  declare protected dataSource: RemoteDataSource<TModel>;
-  private readonly dataService = inject(DataService<TModel>);
-
-  override ngOnInit(): void {
-    this.dataSource = new RemoteDataSource<TModel>(this.dataService, this.columns());
-    this.dataSource.loadAll();
   }
 }

@@ -1,8 +1,8 @@
 import { MatTableDataSource } from '@angular/material/table';
 import { BehaviorSubject, catchError, finalize, of } from 'rxjs';
+import { DataService } from '../services/datatable.service';
 import { ColumnDefinition, DataModel, FilterPayload, PrimitiveType } from '../types';
 import { isNonEmpty } from '../utils';
-import { DataService } from './mui-datatable.service';
 
 export class BasicDataSource<TModel extends DataModel> extends MatTableDataSource<TModel> {
   // Loading state observable

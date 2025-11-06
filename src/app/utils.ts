@@ -1,6 +1,6 @@
 import { PrimitiveType } from './types';
 
-export const isNonEmpty = (value: PrimitiveType | PrimitiveType[]): boolean => {
+export const isNonEmpty = (value: any): boolean => {
   if (value === null || value === undefined) return false;
 
   if (Array.isArray(value)) {

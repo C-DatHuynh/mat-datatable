@@ -5,7 +5,7 @@
     <h2>{{ title() }}</h2>
   </div>
   <mat-toolbar class="mui-datatable-toolbar">
-    @if (tableOptions().search !== false) {
+    @if (tableOptions().canSearch !== false) {
       <mat-form-field appearance="fill" class="filter-field" subscriptSizing="dynamic" style="font-size: 12px">
         <mat-label>Search</mat-label>
         <input matInput (keyup)="applySearch($event)" [placeholder]="tableOptions().searchPlaceholder" #input />
@@ -20,7 +20,7 @@
     }
   </mat-toolbar>
 
-  @if (dataSource.loading$ | async) {
+  @if (loading()) {
     <div class="example-loading-shade">
       <mat-spinner></mat-spinner>
     </div>
@@ -29,7 +29,7 @@
   <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z8" multiTemplateDataRows="tableOptions().expandableRows === true">
     @for (column of columnsToDisplay(); track column) {
       <ng-container matColumnDef="{{ column.name }}">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header disabled="{{ column.options.sort === false }}">{{ column.label || column.name }}</th>
+        <th mat-header-cell *matHeaderCellDef mat-sort-header disabled="{{ column.sort === false }}">{{ column.label || column.name }}</th>
         <td mat-cell *matCellDef="let element">{{ element[column.name] }}</td>
       </ng-container>
     }
@@ -109,7 +109,7 @@
       <mat-form-field appearance="outline" subscriptSizing="dynamic" class="paginator-page-select">
         <mat-select [value]="paginator?.pageIndex" (selectionChange)="jumpToPage($event)" hideSingleSelectionIndicator>
           @for (pageNumber of getPageList(); track pageNumber) {
-            <mat-option [value]="pageNumber - 1">{{ pageNumber }}</mat-option>
+            <mat-option [value]="pageNumber">{{ pageNumber + 1 }}</mat-option>
           }
         </mat-select>
       </mat-form-field>

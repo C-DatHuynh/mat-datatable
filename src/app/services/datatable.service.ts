@@ -1,14 +1,6 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-import { ColumnDefinition, DataModel } from '../types';
-
-@Injectable()
-export abstract class DataService<TModel extends DataModel> {
-  abstract getList(): Observable<TModel[]>;
-  abstract add(dto: TModel): Observable<TModel>;
-  abstract update(dto: TModel): Observable<TModel>;
-  abstract remove(id: number): Observable<number>;
-}
+import { ColumnDefinition } from '../interfaces';
+import { DataModel } from '../types';
 
 @Injectable()
 export class DataTableService<TModel extends DataModel> {
