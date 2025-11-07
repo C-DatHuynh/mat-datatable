@@ -102,6 +102,15 @@ tr.example-element-row:not(.example-expanded-row):active {
   flex: 1 1 auto;
 }
 
+.mui-datatable-toolbar {
+  padding: 16px;
+  background-color: transparent;
+
+  app-search-bar {
+    margin-right: 16px;
+  }
+}
+
 ::ng-deep .mat-form-field {
-  font-size: 8px; // example
+  font-size: 14px;
 }

@@ -10,8 +10,8 @@ import { FORM_DIALOG_IMPORTS, FormDialogComponent } from './form-dialog-base';
       <app-dynamic-form [controlOptions]="formOptions" [formId]="formId" (handleSubmit)="onSubmit($event)" [formValue]="formValue"></app-dynamic-form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button matButton type="reset" [attr.form]="formId">Reset</button>
-      <button matButton type="submit" [attr.form]="formId" cdkFocusInitial>Save</button>
+      <button mat-stroked-button type="reset" [attr.form]="formId">Reset</button>
+      <button mat-raised-button color="primary" type="submit" [attr.form]="formId" cdkFocusInitial>Save</button>
     </mat-dialog-actions>
   `,
   imports: FORM_DIALOG_IMPORTS,

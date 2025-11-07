@@ -11,8 +11,8 @@ import { FORM_DIALOG_IMPORTS, FormDialogComponent } from './form-dialog-base';
       </app-dynamic-form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button matButton type="reset" [attr.form]="formId">Reset</button>
-      <button matButton type="submit" [attr.form]="formId" cdkFocusInitial>Apply</button>
+      <button mat-stroked-button type="reset" [attr.form]="formId">Reset</button>
+      <button mat-raised-button color="primary" type="submit" [attr.form]="formId" cdkFocusInitial>Apply</button>
     </mat-dialog-actions>
   `,
   imports: FORM_DIALOG_IMPORTS,

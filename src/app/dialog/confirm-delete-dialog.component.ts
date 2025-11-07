@@ -11,8 +11,8 @@ import { FORM_DIALOG_IMPORTS, FormDialogComponent } from './form-dialog-base';
       </app-dynamic-form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button matButton mat-dialog-close [attr.form]="formId">Cancel</button>
-      <button matButton type="submit" [attr.form]="formId" cdkFocusInitial>Confirm</button>
+      <button mat-stroked-button mat-dialog-close [attr.form]="formId">Cancel</button>
+      <button mat-raised-button color="warn" type="submit" [attr.form]="formId" cdkFocusInitial>Confirm</button>
     </mat-dialog-actions>
   `,
   imports: FORM_DIALOG_IMPORTS,
