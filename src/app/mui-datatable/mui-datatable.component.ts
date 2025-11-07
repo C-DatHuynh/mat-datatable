@@ -70,6 +70,7 @@ const defaultControlOption: DynamicFormControlOptions = {
   providers: [DataTableService, DataStoreService],
 })
 export class DataTableComponent<TModel extends DataModel> implements AfterViewInit {
+  //#region Signals
   readonly data = input<TModel[]>();
   readonly title = input.required<string>();
   readonly columns = input.required<ColumnDefinition[]>();
@@ -140,10 +141,19 @@ export class DataTableComponent<TModel extends DataModel> implements AfterViewIn
     }
     return [...customRowActions, ...allActions];
   });
+  //#endregion
 
   private readonly destroyRef = inject(DestroyRef);
   error = signal<string | null>(null).asReadonly();
   loading = signal<boolean>(false).asReadonly();
+
+  @ViewChild(MatSort) sort!: MatSort;
+  @ViewChild(MatPaginator) paginator!: MatPaginator;
+  @ViewChild(MatTable) table!: MatTable<TModel>;
+  @ViewChild(MatInput) searchInput!: MatInput;
+
+  dataSource = new MatTableDataSource<TModel>([]);
+  expandedElement!: TModel | null;
 
   constructor(
     @Inject(API_SERVICE_TOKEN) private readonly apiService: ApiService<TModel>,
@@ -155,18 +165,11 @@ export class DataTableComponent<TModel extends DataModel> implements AfterViewIn
     this.subscribeToState();
   }
 
-  @ViewChild(MatSort) sort!: MatSort;
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
-  @ViewChild(MatTable) table!: MatTable<TModel>;
-  @ViewChild(MatInput) searchInput!: MatInput;
-
-  dataSource = new MatTableDataSource<TModel>([]);
-  expandedElement!: TModel | null;
-
   ngAfterViewInit(): void {
     this.initializeComponent();
   }
 
+  //#region State management
   private initializeComponent(): void {
     // Set the DataStoreService settings for filtering
     this.dataStoreService.setSettings({
@@ -180,7 +183,7 @@ export class DataTableComponent<TModel extends DataModel> implements AfterViewIn
       this.dataSource.paginator = this.paginator;
     }
 
-    // Subscribe to pagination
+    // Subscribe to pagination & sorting changes
     this.paginator.page.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(pageEvent => {
       this.dataStoreService.setPagination({
         page: pageEvent.pageIndex,
@@ -189,12 +192,13 @@ export class DataTableComponent<TModel extends DataModel> implements AfterViewIn
         totalPages: Math.ceil(pageEvent.length / pageEvent.pageSize),
       });
     });
-    this.sort.sortChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() =>
+    this.sort.sortChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.paginator.firstPage();
       this.dataStoreService.setSorting({
         column: this.sort.active,
         direction: this.sort.direction as 'asc' | 'desc',
-      })
-    );
+      });
+    });
   }
 
   private subscribeToState(): void {
@@ -236,20 +240,25 @@ export class DataTableComponent<TModel extends DataModel> implements AfterViewIn
     }
     this.callApi(this.apiService.list()).subscribe((resources: TModel[]) => this.dataStoreService.setData(resources));
   }
+  //#endregion
+
+  //#region Feature: Expandable Rows
+
+  isExpanded(element: TModel) {
+    return this.expandedElement === element;
+  }
+
+  toggleExpand(element: TModel) {
+    this.expandedElement = this.isExpanded(element) ? null : element;
+  }
 
   toggle(element: TModel): void {
     this.toggleExpand(element);
   }
 
-  /** Checks whether an element is expanded. */
-  isExpanded(element: TModel) {
-    return this.expandedElement === element;
-  }
+  //#endregion
 
-  /** Toggles the expanded state of an element. */
-  toggleExpand(element: TModel) {
-    this.expandedElement = this.isExpanded(element) ? null : element;
-  }
+  //#region Feature: Pagination
 
   jumpToPage(event: MatSelect) {
     const value = parseInt(event.value, 10);
@@ -288,6 +297,17 @@ export class DataTableComponent<TModel extends DataModel> implements AfterViewIn
     });
   }
 
+  getPageList() {
+    const numberOfPages = this.paginator?.getNumberOfPages();
+    if (!numberOfPages) {
+      return [];
+    }
+    return Array.from({ length: numberOfPages }, (_, i) => i);
+  }
+
+  //#endregion
+
+  //#region Feature: Popups
   openAddEditDialog(item?: TModel, index?: number): void {
     const columnConfig = this.columns().reduce(
       (acc, col) => ({
@@ -337,20 +357,9 @@ export class DataTableComponent<TModel extends DataModel> implements AfterViewIn
       //this.dataSource.removeFromDataSource(index);
     });
   }
+  //#endregion
 
-  getPageList() {
-    const numberOfPages = this.paginator?.getNumberOfPages();
-    if (!numberOfPages) {
-      return [];
-    }
-    return Array.from({ length: numberOfPages }, (_, i) => i);
-  }
-
-  onRowActionClicked(event: Event, action: RowAction, item: TModel, index: number): void {
-    event.stopPropagation();
-    action.onClick(item, index);
-  }
-
+  //#region Feature: Filter
   applySearch(value: string): void {
     // Update the DataStoreService with the search text
     this.dataStoreService.setTextSearch(value);
@@ -368,7 +377,14 @@ export class DataTableComponent<TModel extends DataModel> implements AfterViewIn
       this.dataSource.paginator.firstPage();
     }
   }
+  //#endregion
 
+  onRowActionClicked(event: Event, action: RowAction, item: TModel, index: number): void {
+    event.stopPropagation();
+    action.onClick(item, index);
+  }
+
+  //#region Helper
   callApi<T>(apiCall: Observable<T>): Observable<T> {
     this.dataStoreService.setLoading(true);
     this.dataStoreService.clearError();
@@ -385,4 +401,5 @@ export class DataTableComponent<TModel extends DataModel> implements AfterViewIn
       })
     );
   }
+  //#endregion
 }

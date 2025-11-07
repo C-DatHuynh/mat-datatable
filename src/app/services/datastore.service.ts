@@ -29,6 +29,7 @@ export interface DataStoreSettings {
   providedIn: 'root',
 })
 export class DataStoreService<T extends DataModel> {
+  //#region Signals
   $data = signal<T[]>([]);
   $selectedItem = signal<T | null>(null);
   $selectedItems = signal<T[]>([]);
@@ -56,15 +57,9 @@ export class DataStoreService<T extends DataModel> {
     const filters = this.$filters();
     return this.applyFilters(data, filters, settings.columns);
   });
+  //#endregion
 
-  /*$paginatedData = computed(() => {
-    const data = this.$filteredData();
-    const pagination = this.$pagination();
-    const startIndex = (pagination.page - 1) * pagination.pageSize;
-    const endIndex = startIndex + pagination.pageSize;
-    return data.slice(startIndex, endIndex);
-  });*/
-
+  //#region Getters
   get filteredData() {
     return this.$filteredData;
   }
@@ -108,14 +103,19 @@ export class DataStoreService<T extends DataModel> {
   get loading() {
     return this.$loading.asReadonly();
   }
+  //#endregion
 
-  // Settings
+  //#region Actions
+
+  //#region Settings
 
   setSettings(settings: DataStoreSettings | null): void {
     this.$settings.set(settings);
   }
 
-  // Indicators
+  //#endregion
+
+  //#region Indicators
 
   setLoading(loading: boolean): void {
     this.$loading.set(loading);
@@ -128,8 +128,9 @@ export class DataStoreService<T extends DataModel> {
   clearError(): void {
     this.$error.set(null);
   }
+  //#endregion
 
-  // Actions - Data Manipulation
+  //#region Actions - Data Manipulation
 
   setData(data: T[]): void {
     this.$data.set(data);
@@ -152,8 +153,9 @@ export class DataStoreService<T extends DataModel> {
       return filteredData;
     });
   }
+  //#endregion
 
-  // Actions - Selection
+  //#region Actions - Selection
 
   setSelectedItem(item: T | null): void {
     this.$selectedItem.set(item);
@@ -179,8 +181,9 @@ export class DataStoreService<T extends DataModel> {
   clearSelection(): void {
     this.setSelectedItems([]);
   }
+  //#endregion
 
-  // Actions - Filters
+  //#region Actions - Filters
 
   setTextSearch(search: string): void {
     this.$filters.set({ ...this.$filters(), search });
@@ -236,8 +239,9 @@ export class DataStoreService<T extends DataModel> {
     }
     return result;
   }
+  //#endregion
 
-  // Actions - Pagination
+  //#region Actions - Pagination
 
   setPagination(pagination: DataPagination): void {
     this.$pagination.set(pagination);
@@ -246,10 +250,13 @@ export class DataStoreService<T extends DataModel> {
   setPage(page: number): void {
     this.$pagination.set({ ...this.$pagination(), page });
   }
+  //#endregion
 
-  // Actions - Sorting
+  //#region Actions - Sorting
 
   setSorting(sorting: DataSorting | null): void {
     this.$sorting.set(sorting);
   }
+  //#endregion
+  //#endregion
 }
