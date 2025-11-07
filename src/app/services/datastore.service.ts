@@ -15,7 +15,12 @@ export interface DataPagination {
   totalPages: number;
 }
 
-interface DataStoreSettings {
+export interface DataSorting {
+  column: string;
+  direction: 'asc' | 'desc';
+}
+
+export interface DataStoreSettings {
   columns: ColumnDefinition[];
   table: TableOptions;
 }
@@ -37,6 +42,7 @@ export class DataStoreService<T extends DataModel> {
     total: 0,
     totalPages: 0,
   });
+  $sorting = signal<DataSorting | null>(null);
   $loading = signal<boolean>(false);
   $error = signal<string | null>(null);
 
@@ -70,60 +76,64 @@ export class DataStoreService<T extends DataModel> {
   get data() {
     return this.$data.asReadonly();
   }
-  setData(data: T[]): void {
-    this.$data.set(data);
-  }
 
   get selectedItem() {
     return this.$selectedItem.asReadonly();
-  }
-  setSelectedItem(item: T | null): void {
-    this.$selectedItem.set(item);
   }
 
   get selectedItems() {
     return this.$selectedItems.asReadonly();
   }
-  setSelectedItems(items: T[]): void {
-    this.$selectedItems.set(items);
-  }
 
   get filters() {
     return this.$filters.asReadonly();
-  }
-  setFilters(filters: Partial<DataFilters>): void {
-    this.$filters.set({ ...this.$filters(), ...filters });
-  }
-
-  getSettings() {
-    return this.settings;
-  }
-  setSettings(settings: DataStoreSettings | null): void {
-    this.settings = settings;
   }
 
   get pagination() {
     return this.$pagination.asReadonly();
   }
-  setPagination(pagination: DataPagination): void {
-    this.$pagination.set(pagination);
-  }
 
-  get loading() {
-    return this.$loading.asReadonly();
-  }
-  setLoading(loading: boolean): void {
-    this.$loading.set(loading);
+  get sorting() {
+    return this.$sorting.asReadonly();
   }
 
   get error() {
     return this.$error.asReadonly();
   }
+
+  get loading() {
+    return this.$loading.asReadonly();
+  }
+
+  // Settings
+
+  getSettings() {
+    return this.settings;
+  }
+
+  setSettings(settings: DataStoreSettings | null): void {
+    this.settings = settings;
+  }
+
+  // Indicators
+
+  setLoading(loading: boolean): void {
+    this.$loading.set(loading);
+  }
+
   setError(error: string | null): void {
     this.$error.set(error);
   }
 
+  clearError(): void {
+    this.$error.set(null);
+  }
+
   // Actions - Data Manipulation
+
+  setData(data: T[]): void {
+    this.$data.set(data);
+  }
 
   addDataItem(item: T): void {
     this.$data.update(currentData => [item, ...currentData]);
@@ -145,6 +155,14 @@ export class DataStoreService<T extends DataModel> {
 
   // Actions - Selection
 
+  setSelectedItem(item: T | null): void {
+    this.$selectedItem.set(item);
+  }
+
+  setSelectedItems(items: T[]): void {
+    this.$selectedItems.set(items);
+  }
+
   addSelectedItem(item: T): void {
     const currentSelected = this.$selectedItems();
     if (!currentSelected.find(selected => selected.id === item.id)) {
@@ -164,33 +182,24 @@ export class DataStoreService<T extends DataModel> {
 
   // Actions - Filters
 
-  clearFilters(): void {
-    this.$filters.set({ search: null, filter: null });
-    this.$pagination.set({ ...this.$pagination(), page: 1 });
+  setTextSearch(search: string): void {
+    this.$filters.set({ ...this.$filters(), search });
   }
 
-  // Actions - Pagination
-
-  setPage(page: number): void {
-    this.$pagination.set({ ...this.$pagination(), page });
+  clearTextSearch(): void {
+    this.$filters.set({ ...this.$filters(), search: null });
+    this.$pagination.set({ ...this.$pagination(), page: 0 });
   }
 
-  setPageSize(limit: number): void {
-    this.$pagination.set({
-      ...this.$pagination(),
-      pageSize: limit,
-      page: 1,
-      totalPages: Math.ceil(this.$pagination().total / limit),
-    });
+  setFilterForm(filter: object): void {
+    this.$filters.set({ ...this.$filters(), filter });
   }
 
-  // Actions - Error Handling
-
-  clearError(): void {
-    this.$error.set(null);
+  clearFilterForm(): void {
+    this.$filters.set({ ...this.$filters(), filter: null });
+    this.$pagination.set({ ...this.$pagination(), page: 0 });
   }
 
-  // Utility methods
   private textSearch(data: T, columns: ColumnDefinition[], search: string): boolean {
     const searchTerms = search.trim().toLowerCase();
     return columns.some(column => {
@@ -229,5 +238,30 @@ export class DataStoreService<T extends DataModel> {
       result = result.filter(item => this.formFilter(item, filter, allowedColumns));
     }
     return result;
+  }
+
+  // Actions - Pagination
+
+  setPagination(pagination: DataPagination): void {
+    this.$pagination.set(pagination);
+  }
+
+  setPage(page: number): void {
+    this.$pagination.set({ ...this.$pagination(), page });
+  }
+
+  setPageSize(limit: number): void {
+    this.$pagination.set({
+      ...this.$pagination(),
+      pageSize: limit,
+      page: 1,
+      totalPages: Math.ceil(this.$pagination().total / limit),
+    });
+  }
+
+  // Actions - Sorting
+
+  setSorting(sorting: DataSorting | null): void {
+    this.$sorting.set(sorting);
   }
 }
