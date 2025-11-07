@@ -1,6 +1,5 @@
-import AddEditDialogComponent from './add-edit-dialog.component';
-import ConfirmDeleteDialogComponent from './confirm-delete-dialog.component';
-import FilterDialogComponent from './filter-dialog.component';
-import { FormDialogComponent, FormDialogData, FormValueType } from './form-dialog-base';
+import ActionDialogComponent from './action-dialog.component';
+import FormDialogComponent from './form-dialog.component';
+import { FormDialogData, FormValueType } from './form-dialog.component';
 
-export { AddEditDialogComponent, ConfirmDeleteDialogComponent, FilterDialogComponent, type FormValueType, type FormDialogData, FormDialogComponent };
+export { FormDialogComponent, ActionDialogComponent, type FormValueType, type FormDialogData };

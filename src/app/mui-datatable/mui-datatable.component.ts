@@ -14,8 +14,8 @@ import { MatSelectModule, MatSelect } from '@angular/material/select';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableModule, MatTable, MatTableDataSource } from '@angular/material/table';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { catchError, finalize, merge, Observable, of, startWith, Subject, switchMap, takeUntil, throwError } from 'rxjs';
-import { AddEditDialogComponent, ConfirmDeleteDialogComponent, FilterDialogComponent } from '../dialog';
+import { catchError, finalize, Observable, throwError } from 'rxjs';
+import { FormDialogComponent, ActionDialogComponent } from '../dialog';
 import { DynamicFormControlOptions } from '../dynamic-form';
 import { Action, ColumnDefinition, RowAction, TableOptions } from '../interfaces';
 import { SearchBarComponent } from '../search-bar/search-bar.component';
@@ -150,7 +150,6 @@ export class DataTableComponent<TModel extends DataModel> implements AfterViewIn
   @ViewChild(MatSort) sort!: MatSort;
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatTable) table!: MatTable<TModel>;
-  @ViewChild(MatInput) searchInput!: MatInput;
 
   dataSource = new MatTableDataSource<TModel>([]);
   expandedElement!: TModel | null;
@@ -279,7 +278,7 @@ export class DataTableComponent<TModel extends DataModel> implements AfterViewIn
         }),
         {}
       );
-    const dialogRef = this.dialogService.open(FilterDialogComponent, {
+    const dialogRef = this.dialogService.open(FormDialogComponent, {
       data: {
         columnConfig: columnConfig,
         formValue: formSearch,
@@ -290,7 +289,6 @@ export class DataTableComponent<TModel extends DataModel> implements AfterViewIn
       if (!result) {
         return;
       }
-      this.searchInput.value = '';
       this.dataSource.filter = JSON.stringify({
         formSearch: result,
       });
@@ -316,7 +314,7 @@ export class DataTableComponent<TModel extends DataModel> implements AfterViewIn
       }),
       {}
     );
-    const dialogRef = this.dialogService.open(AddEditDialogComponent, {
+    const dialogRef = this.dialogService.open(FormDialogComponent, {
       data: {
         columnConfig: columnConfig,
         formValue: item,
@@ -336,25 +334,24 @@ export class DataTableComponent<TModel extends DataModel> implements AfterViewIn
   }
 
   openDeleteConfirmDialog(item: TModel, index: number): void {
-    const columnConfig: Record<string, DynamicFormControlOptions> = {
-      confirm: {
-        label: 'Type "delete" to confirm',
-        controlType: 'textbox',
-        type: 'text',
-        validators: [Validators.required, Validators.pattern(/^delete$/i)],
-      },
-    };
-    const dialogRef = this.dialogService.open(ConfirmDeleteDialogComponent, {
+    const dialogRef = this.dialogService.open(ActionDialogComponent, {
       data: {
-        title: `Confirm delete ${item.name}`,
-        columnConfig: columnConfig,
+        title: `Delete ${item.name}`,
+        message: 'Are you sure you want to delete this item?',
+        actions: [{ label: 'Delete', color: 'warn', variant: 'raised', focus: true }],
       },
     });
     dialogRef.afterClosed().subscribe(result => {
       if (!result) {
         return;
       }
-      //this.dataSource.removeFromDataSource(index);
+      if (this.data()) {
+        this.dataStoreService.removeDataItem(item.id);
+      } else {
+        this.callApi(this.apiService.remove(item.id)).subscribe(() => {
+          this.dataStoreService.removeDataItem(item.id);
+        });
+      }
     });
   }
   //#endregion
