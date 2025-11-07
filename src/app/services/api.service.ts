@@ -9,7 +9,7 @@ export interface ApiServiceInterface<T> {
   listRemote(pagination: DataPagination | null, filters: DataFilters | null, sorting: DataSorting | null): Observable<{ data: T[]; total: number }>;
   add(dto: T): Observable<T>;
   update(id: number | string, dto: Exclude<T, { id: number | string }>): Observable<T>;
-  remove(id: number | string): Observable<number>;
+  remove(id: number | string): Observable<void>;
 }
 
 export const API_SERVICE_TOKEN = new InjectionToken<ApiServiceInterface<any>>('ApiService');
@@ -47,8 +47,8 @@ export class ApiService<T> implements ApiServiceInterface<T> {
     return this.http.put<T>(`${this.baseUrl}/${id}`, dto, { headers: this.headers });
   }
 
-  remove(id: number | string): Observable<number> {
-    return this.http.delete<number>(`${this.baseUrl}/${id}`, { headers: this.headers });
+  remove(id: number | string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${id}`, { headers: this.headers });
   }
 }
 

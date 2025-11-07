@@ -140,14 +140,14 @@ export class DataStoreService<T extends DataModel> {
     this.$data.update(currentData => [item, ...currentData]);
   }
 
-  updateDataItem(id: string, updates: Partial<T>): void {
+  updateDataItem(id: string | number, updates: Partial<T>): void {
     this.$data.update(currentData => {
       const updatedData = currentData.map(item => (item.id === id ? { ...item, ...updates } : item));
       return updatedData;
     });
   }
 
-  removeDataItem(id: string): void {
+  removeDataItem(id: string | number): void {
     this.$data.update(currentData => {
       const filteredData = currentData.filter(item => item.id !== id);
       return filteredData;
