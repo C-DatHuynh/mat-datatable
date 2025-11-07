@@ -1,15 +1,15 @@
 // mui-datatable.component.stories.ts
-import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { applicationConfig, type Meta, type StoryObj } from '@storybook/angular';
 import { delay, Observable, of } from 'rxjs';
 import { ColumnDefinition, TableOptions } from '../interfaces';
 import { DataTableComponent } from '../mui-datatable';
 import { ApiService, provideApiService } from '../services';
-import { ELEMENT_DATA, PeriodicElement } from './fixture';
+import { DataFilters, DataPagination, DataSorting } from '../services/datastore.service';
+import { ELEMENT_DATA, PeriodicElement } from '../stories/fixture';
 
 const meta: Meta<DataTableComponent<PeriodicElement>> = {
-  title: 'MUI Datatable',
+  title: 'Components/MUI Datatable',
   component: DataTableComponent,
   tags: ['autodocs'],
   parameters: {
@@ -62,6 +62,7 @@ export const ExternalData: Story = {
 class PeriodicElementService extends ApiService<PeriodicElement> {
   protected override baseUrl = 'https://example.com/api/elements';
   override list(): Observable<PeriodicElement[]> {
+    console.log('API Service list called');
     return of(ELEMENT_DATA).pipe(delay(1000));
   }
 }
@@ -82,9 +83,14 @@ export const WithCustomApiService: Story = {
 @Injectable()
 class RemotePeriodicElementService extends ApiService<PeriodicElement> {
   protected override baseUrl = 'https://example.com/api/elements';
-  override listRemote(pagination: { page: number; pageSize: number }, filters: object): Observable<{ data: PeriodicElement[]; total: number }> {
-    const startIndex = pagination.page * pagination.pageSize;
-    const endIndex = startIndex + pagination.pageSize;
+  override listRemote(
+    pagination: DataPagination | null,
+    filters: DataFilters | null,
+    sorting: DataSorting | null
+  ): Observable<{ data: PeriodicElement[]; total: number }> {
+    console.log('API Service listRemote called with:', { pagination, filters, sorting });
+    const startIndex = pagination?.page ? pagination.page * (pagination.pageSize || 5) : 0;
+    const endIndex = startIndex + (pagination?.pageSize || 5);
     return of({ data: ELEMENT_DATA.slice(startIndex, endIndex), total: ELEMENT_DATA.length }).pipe(delay(1000));
   }
 }

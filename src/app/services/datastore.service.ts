@@ -9,10 +9,10 @@ export interface DataFilters {
 }
 
 export interface DataPagination {
-  page: number;
-  pageSize: number;
-  total: number;
-  totalPages: number;
+  page: number | null;
+  pageSize: number | null;
+  total: number | null;
+  totalPages: number | null;
 }
 
 export interface DataSorting {
@@ -37,24 +37,24 @@ export class DataStoreService<T extends DataModel> {
     filter: null,
   });
   $pagination = signal<DataPagination>({
-    page: 1,
-    pageSize: 20,
-    total: 0,
-    totalPages: 0,
+    page: null,
+    pageSize: null,
+    total: null,
+    totalPages: null,
   });
   $sorting = signal<DataSorting | null>(null);
   $loading = signal<boolean>(false);
   $error = signal<string | null>(null);
-
-  private settings: DataStoreSettings | null = null;
+  $settings = signal<DataStoreSettings | null>(null);
 
   $filteredData = computed(() => {
     const data = this.$data();
-    if (this.settings?.table.remote) {
+    const settings = this.$settings();
+    if (!settings || settings.table.remote) {
       return data;
     }
     const filters = this.$filters();
-    return this.applyFilters(data, filters, this.settings?.columns);
+    return this.applyFilters(data, filters, settings.columns);
   });
 
   /*$paginatedData = computed(() => {
@@ -72,6 +72,10 @@ export class DataStoreService<T extends DataModel> {
   /*get paginatedData() {
     return this.$paginatedData;
   }*/
+
+  get settings() {
+    return this.$settings.asReadonly();
+  }
 
   get data() {
     return this.$data.asReadonly();
@@ -107,12 +111,8 @@ export class DataStoreService<T extends DataModel> {
 
   // Settings
 
-  getSettings() {
-    return this.settings;
-  }
-
   setSettings(settings: DataStoreSettings | null): void {
-    this.settings = settings;
+    this.$settings.set(settings);
   }
 
   // Indicators
@@ -188,7 +188,6 @@ export class DataStoreService<T extends DataModel> {
 
   clearTextSearch(): void {
     this.$filters.set({ ...this.$filters(), search: null });
-    this.$pagination.set({ ...this.$pagination(), page: 0 });
   }
 
   setFilterForm(filter: object): void {
@@ -197,7 +196,6 @@ export class DataStoreService<T extends DataModel> {
 
   clearFilterForm(): void {
     this.$filters.set({ ...this.$filters(), filter: null });
-    this.$pagination.set({ ...this.$pagination(), page: 0 });
   }
 
   private textSearch(data: T, columns: ColumnDefinition[], search: string): boolean {
@@ -230,9 +228,8 @@ export class DataStoreService<T extends DataModel> {
     const allowedColumns = settings.filter(col => col.filter !== false);
     let result = data;
     if (search !== null) {
-      const filterValue = search.trim().toLowerCase();
       // Loops over the values in the array and returns true if any of them match the filter string
-      result = result.filter(item => this.textSearch(item, allowedColumns, filterValue));
+      result = result.filter(item => this.textSearch(item, allowedColumns, search));
     }
     if (filter !== null) {
       result = result.filter(item => this.formFilter(item, filter, allowedColumns));
@@ -248,15 +245,6 @@ export class DataStoreService<T extends DataModel> {
 
   setPage(page: number): void {
     this.$pagination.set({ ...this.$pagination(), page });
-  }
-
-  setPageSize(limit: number): void {
-    this.$pagination.set({
-      ...this.$pagination(),
-      pageSize: limit,
-      page: 1,
-      totalPages: Math.ceil(this.$pagination().total / limit),
-    });
   }
 
   // Actions - Sorting

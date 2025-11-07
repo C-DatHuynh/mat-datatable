@@ -1,8 +1,7 @@
 // mui-datatable.component.ts
 import { CommonModule } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
-import { Component, ViewChild, OnInit, AfterViewInit, inject, input, computed, Inject, OnDestroy, effect, signal } from '@angular/core';
-import { toObservable } from '@angular/core/rxjs-interop';
+import { Component, ViewChild, OnInit, AfterViewInit, inject, input, computed, Inject, OnDestroy, effect, signal, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
@@ -15,10 +14,11 @@ import { MatSelectModule, MatSelect } from '@angular/material/select';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableModule, MatTable, MatTableDataSource } from '@angular/material/table';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { catchError, finalize, merge, Observable, of, startWith, Subject, switchMap, takeUntil } from 'rxjs';
+import { catchError, finalize, merge, Observable, of, startWith, Subject, switchMap, takeUntil, throwError } from 'rxjs';
 import { AddEditDialogComponent, ConfirmDeleteDialogComponent, FilterDialogComponent } from '../dialog';
 import { DynamicFormControlOptions } from '../dynamic-form';
 import { Action, ColumnDefinition, RowAction, TableOptions } from '../interfaces';
+import { SearchBarComponent } from '../search-bar/search-bar.component';
 import { API_SERVICE_TOKEN, ApiService, DataStoreService, DataTableService, NotificationService } from '../services';
 import { DataModel } from '../types';
 
@@ -35,6 +35,7 @@ const SHARE_IMPORTS = [
   MatDialogModule,
   MatProgressSpinnerModule,
   MatToolbarModule,
+  SearchBarComponent,
 ];
 
 const defaultTableOptions: TableOptions = {
@@ -66,9 +67,9 @@ const defaultControlOption: DynamicFormControlOptions = {
   styleUrls: ['./mui-datatable.component.scss'],
   standalone: true,
   imports: SHARE_IMPORTS,
-  providers: [DataTableService, DataStoreService, HttpClient],
+  providers: [DataTableService, DataStoreService],
 })
-export class DataTableComponent<TModel extends DataModel> implements OnInit, OnDestroy, AfterViewInit {
+export class DataTableComponent<TModel extends DataModel> implements AfterViewInit {
   readonly data = input<TModel[]>();
   readonly title = input.required<string>();
   readonly columns = input.required<ColumnDefinition[]>();
@@ -140,10 +141,9 @@ export class DataTableComponent<TModel extends DataModel> implements OnInit, OnD
     return [...customRowActions, ...allActions];
   });
 
-  private destroy$ = new Subject<void>();
+  private readonly destroyRef = inject(DestroyRef);
   error = signal<string | null>(null).asReadonly();
   loading = signal<boolean>(false).asReadonly();
-  filterChange$ = new Observable<any>();
 
   constructor(
     @Inject(API_SERVICE_TOKEN) private readonly apiService: ApiService<TModel>,
@@ -163,83 +163,58 @@ export class DataTableComponent<TModel extends DataModel> implements OnInit, OnD
   dataSource = new MatTableDataSource<TModel>([]);
   expandedElement!: TModel | null;
 
-  ngOnInit(): void {
-    this.loadInitialData();
-  }
-
   ngAfterViewInit(): void {
-    this.setupTable();
+    this.initializeComponent();
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
+  private initializeComponent(): void {
+    // Set the DataStoreService settings for filtering
+    this.dataStoreService.setSettings({
+      columns: this.columns(),
+      table: this.tableOptions(),
+    });
 
-  private setupTable(): void {
-    if (this.tableOptions().remote) {
-      this.filterChange$.subscribe(() => this.jumpToPage({ value: 0 } as MatSelect));
-
-      // Subscribe to sorting changes
-      this.sort.sortChange.subscribe(() => this.jumpToPage({ value: 0 } as MatSelect));
-
-      merge(this.sort.sortChange, this.paginator.page, this.filterChange$)
-        .pipe(
-          startWith({}), // initial load
-          switchMap(() => {
-            this.dataStoreService.setLoading(true);
-            this.dataStoreService.clearError();
-            return this.apiService
-              .listRemote(
-                {
-                  page: this.paginator.pageIndex || 0,
-                  pageSize: this.paginator.pageSize || 10,
-                },
-                {},
-                { column: this.sort.active, direction: this.sort.direction as 'asc' | 'desc' }
-              )
-              .pipe(
-                catchError(err => {
-                  this.dataStoreService.setError(err?.message || 'Failed to load data.');
-                  console.error(err);
-                  return of({ data: [], total: 0 }); // empty data on error
-                }),
-                // <- finalize is INSIDE the inner observable so it runs after each request
-                finalize(() => this.dataStoreService.setLoading(false))
-              );
-          }),
-          takeUntil(this.destroy$)
-        )
-        .subscribe(({ data, total }) => {
-          this.dataStoreService.setData(data);
-          this.paginator.length = total; // Update total length
-        });
-    } else {
+    if (!this.tableOptions().remote) {
+      this.loadInitialData();
       this.dataSource.sort = this.sort;
       this.dataSource.paginator = this.paginator;
     }
+
     // Subscribe to pagination
-    this.paginator.page.subscribe(pageEvent => {
+    this.paginator.page.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(pageEvent => {
       this.dataStoreService.setPagination({
-        page: pageEvent.pageIndex + 1,
+        page: pageEvent.pageIndex,
         pageSize: pageEvent.pageSize,
         total: pageEvent.length,
         totalPages: Math.ceil(pageEvent.length / pageEvent.pageSize),
       });
     });
+    this.sort.sortChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() =>
+      this.dataStoreService.setSorting({
+        column: this.sort.active,
+        direction: this.sort.direction as 'asc' | 'desc',
+      })
+    );
   }
 
   private subscribeToState(): void {
     effect(() => {
       const filteredData = this.dataStoreService.filteredData();
-      const inputData = this.data();
-      if (inputData) {
-        this.updateTableData(inputData);
-      } else {
-        this.updateTableData(filteredData);
-      }
+      this.updateTableData(filteredData);
     });
-    this.filterChange$ = toObservable(this.dataStoreService.filters);
+    effect(() => {
+      const pagination = this.dataStoreService.pagination();
+      const sorting = this.dataStoreService.sorting();
+      const filter = this.dataStoreService.filters();
+      const settings = this.dataStoreService.settings();
+      if (settings?.table.remote) {
+        this.callApi(this.apiService.listRemote(pagination, filter, sorting)).subscribe((result: { data: TModel[]; total: number }) => {
+          this.dataStoreService.setData(result.data);
+          this.paginator.length = result.total;
+        });
+      }
+      return;
+    });
 
     // Subscribe to loading state
     this.loading = this.dataStoreService.loading;
@@ -249,7 +224,6 @@ export class DataTableComponent<TModel extends DataModel> implements OnInit, OnD
   }
 
   private updateTableData(data: TModel[]): void {
-    console.log('Updating table data', data);
     const tableData: TModel[] = data.filter(resource => resource && resource.id); // Filter out null/undefined resources
     this.dataSource.data = tableData;
   }
@@ -260,39 +234,11 @@ export class DataTableComponent<TModel extends DataModel> implements OnInit, OnD
       this.dataStoreService.setData(inputData);
       return;
     }
-    // Set loading state in RSS store
-    this.dataStoreService.setLoading(true);
-
-    if (this.tableOptions().remote) {
-      return; // Remote data will be loaded via setupTable
-    }
-
-    // Load resources
-    this.apiService
-      .list()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (resources: TModel[]) => {
-          this.dataStoreService.setData(resources);
-          this.dataStoreService.setLoading(false);
-        },
-        error: error => {
-          this.dataStoreService.setLoading(false);
-          this.dataStoreService.setError(error.message || 'Failed to load resources');
-          //this.notificationService.handleApiError(error, 'Loading Resources');
-        },
-      });
+    this.callApi(this.apiService.list()).subscribe((resources: TModel[]) => this.dataStoreService.setData(resources));
   }
 
-  applySearch(event: Event): void {
-    const filterValue = (event.target as HTMLInputElement).value;
-    this.dataSource.filter = JSON.stringify({
-      textSearch: filterValue.trim().toLowerCase(),
-    });
-
-    if (this.dataSource.paginator) {
-      this.dataSource.paginator.firstPage();
-    }
+  toggle(element: TModel): void {
+    this.toggleExpand(element);
   }
 
   /** Checks whether an element is expanded. */
@@ -403,5 +349,40 @@ export class DataTableComponent<TModel extends DataModel> implements OnInit, OnD
   onRowActionClicked(event: Event, action: RowAction, item: TModel, index: number): void {
     event.stopPropagation();
     action.onClick(item, index);
+  }
+
+  applySearch(value: string): void {
+    // Update the DataStoreService with the search text
+    this.dataStoreService.setTextSearch(value);
+
+    if (this.dataSource.paginator) {
+      this.dataSource.paginator.firstPage();
+    }
+  }
+
+  onSearchClear(): void {
+    // Clear the DataStoreService search text
+    this.dataStoreService.clearTextSearch();
+
+    if (this.dataSource.paginator) {
+      this.dataSource.paginator.firstPage();
+    }
+  }
+
+  callApi<T>(apiCall: Observable<T>): Observable<T> {
+    this.dataStoreService.setLoading(true);
+    this.dataStoreService.clearError();
+
+    return apiCall.pipe(
+      catchError(error => {
+        const errorMsg = error?.message || 'An error occurred';
+        this.dataStoreService.setError(errorMsg);
+        console.error('API Error:', error);
+        return throwError(() => error);
+      }),
+      finalize(() => {
+        this.dataStoreService.setLoading(false);
+      })
+    );
   }
 }
