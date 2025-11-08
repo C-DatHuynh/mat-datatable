@@ -7,7 +7,7 @@
   "arrowParens": "avoid",
   "trailingComma": "es5",
   "bracketSameLine": true,
-  "printWidth": 150,
+  "printWidth": 120,
   "endOfLine": "auto",
   "plugins": ["prettier-plugin-sort-re-exports", "@trivago/prettier-plugin-sort-imports"],
   "importOrder": ["^@angular/(.*)$", "^rxjs/(.*)$", "<THIRD_PARTY_MODULES>", "^@gov/(.*)$", "^@core/(.*)$", "^@shared/(.*)$", "^[./]"],
