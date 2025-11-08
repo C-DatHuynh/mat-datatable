@@ -1,50 +1,77 @@
-import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
-import { DynamicFormComponent } from '../dynamic-form';
-import { DynamicFormControlOptions } from '../dynamic-form/form-control-base';
+import { ChangeDetectionStrategy, Component, Inject, ViewChild } from '@angular/core';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { FormRendererComponent } from '../formio';
 import { PrimitiveType } from '../types';
-import BaseDialogComponent, { DialogAction } from './base-dialog.component';
+import { splitArrayIntoChunks } from '../utils';
+import { BaseDialogComponent, DialogAction, DialogOptions } from './base-dialog.component';
 
 export type FormValueType = Record<string, PrimitiveType | PrimitiveType[] | File | File[]>;
 
 export interface FormDialogData {
   title: string;
-  formValue: FormValueType;
-  columnConfig: Record<string, DynamicFormControlOptions>;
+  formValue: any;
+  formComponents: object[];
+  columns: number;
   actions: DialogAction[];
   showCloseButton?: boolean;
 }
 
 @Component({
-  selector: 'app-add-edit-dialog',
+  selector: 'app-form-dialog',
   template: `
-    <app-base-dialog [options]="{ title: title, actions: data.actions, showCloseButton: true }" (actionDone)="onAction($event)">
-      <app-dynamic-form [controlOptions]="formOptions" [formId]="formId" (handleSubmit)="onSubmit($event)" [formValue]="formValue"></app-dynamic-form>
+    <app-base-dialog [options]="dialogOptions" (actionDone)="onAction($event)">
+      <app-form-renderer #dialogForm [form]="formOptions" [submission]="formValue" (formSubmit)="onSubmit($event)"></app-form-renderer>
     </app-base-dialog>
   `,
-  imports: [BaseDialogComponent, DynamicFormComponent],
+  imports: [BaseDialogComponent, FormRendererComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
 })
-export default class FormDialogComponent {
-  readonly formId: string = 'formDialog';
-  readonly formOptions!: Record<string, DynamicFormControlOptions>;
-  readonly formValue!: FormValueType;
-  readonly title!: string;
+export class FormDialogComponent {
+  formOptions!: any;
+  dialogOptions!: DialogOptions;
+  formValue!: any;
+  columns!: number;
+
+  @ViewChild(FormRendererComponent) dialogForm!: FormRendererComponent;
 
   constructor(
     private dialogRef: MatDialogRef<FormDialogComponent, any>,
-    @Inject(MAT_DIALOG_DATA) public data: FormDialogData
-  ) {}
-
-  onAction(value: DialogAction): void {
-    this.dialogRef.close(value);
+    @Inject(MAT_DIALOG_DATA) readonly data: FormDialogData
+  ) {
+    this.columns = this.data.columns;
+    this.formOptions = { type: 'form', components: this.setLayout(this.data.formComponents, this.columns) };
+    this.formValue = { data: this.data.formValue };
+    this.dialogOptions = { title: this.data.title, actions: this.data.actions, showCloseButton: true };
   }
 
-  onSubmit(data: FormValueType) {
+  onAction(value: DialogAction): void {
+    const { type } = value;
+    switch (type) {
+      case 'ok':
+        console.log('submitting form from dialog action');
+        this.dialogForm.submit();
+        return;
+      case 'cancel':
+        this.dialogRef.close();
+        return;
+      default:
+        return;
+    }
+  }
+
+  onSubmit(data: object) {
+    console.log('FormDialogComponent - onSubmit data:', data);
     this.dialogRef.close(data);
+  }
+
+  setLayout(components: object[], columns: number = 2) {
+    const chunks = splitArrayIntoChunks(components, columns);
+    return [
+      {
+        type: 'columns',
+        columns: chunks.map(chunk => ({ width: 12 / chunk.length, components: chunk })),
+      },
+    ];
   }
 }

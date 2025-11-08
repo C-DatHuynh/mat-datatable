@@ -28,14 +28,12 @@ export interface DialogOptions {
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
 })
-export default class BaseDialogComponent {
+export class BaseDialogComponent {
   options = input.required<DialogOptions>();
-  actions = input<DialogAction[]>([]);
   actionDone = output<DialogAction>();
   defaultCancel: DialogAction = {
     label: 'Cancel',
-    color: 'warn',
-    variant: 'stroked',
+    color: 'primary',
     type: 'cancel',
   };
   defaultOk: DialogAction = {
@@ -46,8 +44,8 @@ export default class BaseDialogComponent {
   };
 
   allActions = computed(() => {
-    const actions = this.actions();
-
+    const { actions } = this.options();
+    console.log('Initial actions:', actions);
     // Add default cancel action if none exists and not explicitly disabled
     const hasCancelAction = actions.some(action => action.type === 'cancel');
     if (!hasCancelAction) {
