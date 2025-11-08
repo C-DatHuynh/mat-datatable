@@ -7,15 +7,12 @@ export interface ColumnDefinition {
   display?: boolean;
   filter?: boolean;
   filterOptions?: {
-    controlType?: FormControlType;
-    validators?: any; //| ((value: PrimitiveType, row: object) => boolean);
     logic?: FilterLogic; // Custom logic for filtering
-    selectOptions?: { key: string; value: any }[]; // For dropdowns and multiselects
+    formioOptions?: object;
   };
   editable?: boolean;
   editOptions?: {
-    controlType?: FormControlType;
-    validators?: any; //| ((value: PrimitiveType, row: object) => boolean);
+    formioOptions?: object;
   };
   sort?: boolean;
 }

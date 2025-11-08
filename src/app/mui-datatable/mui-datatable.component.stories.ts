@@ -38,7 +38,7 @@ const columns: ColumnDefinition[] = [
     display: true,
     filter: true,
     sort: false,
-    filterOptions: { controlType: 'dropdown', selectOptions },
+    filterOptions: {},
   },
   { name: 'description', label: 'Description', display: false, filter: false, sort: false },
 ];

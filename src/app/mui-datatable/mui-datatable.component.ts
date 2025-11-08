@@ -1,13 +1,23 @@
 // mui-datatable.component.ts
 import { CommonModule } from '@angular/common';
-import { Component, ViewChild, OnInit, AfterViewInit, inject, input, computed, Inject, OnDestroy, effect, signal, DestroyRef } from '@angular/core';
-import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { Validators } from '@angular/forms';
+import {
+  Component,
+  ViewChild,
+  AfterViewInit,
+  inject,
+  input,
+  computed,
+  Inject,
+  effect,
+  signal,
+  DestroyRef,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInput, MatInputModule } from '@angular/material/input';
+import { MatInputModule } from '@angular/material/input';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule, MatSelect } from '@angular/material/select';
@@ -15,8 +25,7 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableModule, MatTable, MatTableDataSource } from '@angular/material/table';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { catchError, finalize, Observable, throwError } from 'rxjs';
-import { FormDialogComponent, ActionDialogComponent } from '../dialog';
-import { DynamicFormControlOptions } from '../dynamic-form';
+import { FormDialogComponent, ActionDialogComponent, FormDialogData, ActionDialogData } from '../dialog';
 import { Action, ColumnDefinition, RowAction, TableOptions } from '../interfaces';
 import { SearchBarComponent } from '../search-bar/search-bar.component';
 import { API_SERVICE_TOKEN, ApiService, DataStoreService, DataTableService, NotificationService } from '../services';
@@ -56,9 +65,8 @@ const defaultTableOptions: TableOptions = {
   selectableRows: 'none',
 };
 
-const defaultControlOption: DynamicFormControlOptions = {
-  controlType: 'textbox',
-  type: 'text',
+const defaultControlOption: object = {
+  type: 'textfield',
 };
 
 @Component({
@@ -129,7 +137,7 @@ export class DataTableComponent<TModel extends DataModel> implements AfterViewIn
       allActions.push({
         label: 'Edit',
         icon: 'edit',
-        onClick: (item: object, index: number) => this.openAddEditDialog(item as TModel, getTrueIndex(index)),
+        onClick: (item: object, index: number) => this.openAddEditDialog(item as TModel),
       });
     }
     if (canDelete) {
@@ -211,10 +219,12 @@ export class DataTableComponent<TModel extends DataModel> implements AfterViewIn
       const filter = this.dataStoreService.filters();
       const settings = this.dataStoreService.settings();
       if (settings?.table.remote) {
-        this.callApi(this.apiService.listRemote(pagination, filter, sorting)).subscribe((result: { data: TModel[]; total: number }) => {
-          this.dataStoreService.setData(result.data);
-          this.paginator.length = result.total;
-        });
+        this.callApi(this.apiService.listRemote(pagination, filter, sorting)).subscribe(
+          (result: { data: TModel[]; total: number }) => {
+            this.dataStoreService.setData(result.data);
+            this.paginator.length = result.total;
+          }
+        );
       }
       return;
     });
@@ -267,34 +277,6 @@ export class DataTableComponent<TModel extends DataModel> implements AfterViewIn
     }
   }
 
-  openFilterDialog(): void {
-    const { formSearch = {} } = this.dataSource.filter ? JSON.parse(this.dataSource.filter) : {};
-    const columnConfig = this.columns()
-      .filter(column => column.filter !== false)
-      .reduce(
-        (acc, col) => ({
-          ...acc,
-          [col.name]: col.filterOptions ?? defaultControlOption,
-        }),
-        {}
-      );
-    const dialogRef = this.dialogService.open(FormDialogComponent, {
-      data: {
-        columnConfig: columnConfig,
-        formValue: formSearch,
-        title: 'Filter',
-      },
-    });
-    dialogRef.afterClosed().subscribe(result => {
-      if (!result) {
-        return;
-      }
-      this.dataSource.filter = JSON.stringify({
-        formSearch: result,
-      });
-    });
-  }
-
   getPageList() {
     const numberOfPages = this.paginator?.getNumberOfPages();
     if (!numberOfPages) {
@@ -306,26 +288,51 @@ export class DataTableComponent<TModel extends DataModel> implements AfterViewIn
   //#endregion
 
   //#region Feature: Popups
-  openAddEditDialog(item?: TModel, index?: number): void {
-    const columnConfig = this.columns().reduce(
-      (acc, col) => ({
-        ...acc,
-        [col.name]: col.editOptions ?? defaultControlOption,
-      }),
-      {}
-    );
+  openFilterDialog(): void {
+    const { filter = {} } = this.dataStoreService.filters();
+    const formComponents = this.columns()
+      .filter(column => column.filter !== false)
+      .map(col => ({
+        key: col.name,
+        label: col.label || col.name,
+        ...(col.filterOptions?.formioOptions || defaultControlOption),
+      }));
     const dialogRef = this.dialogService.open(FormDialogComponent, {
       data: {
-        columnConfig: columnConfig,
-        formValue: item,
-        title: item ? `Edit ${item.name}` : `Add item`,
-      },
+        formComponents,
+        formValue: filter,
+        title: 'Filter',
+        actions: [{ label: 'Apply', type: 'ok', color: 'primary', variant: 'stroked' }],
+      } as FormDialogData,
     });
     dialogRef.afterClosed().subscribe(result => {
       if (!result) {
         return;
       }
-      if (index !== undefined) {
+      console.log('Filter form result:', result);
+    });
+  }
+
+  openAddEditDialog(item?: TModel): void {
+    const formComponents = this.columns().map(col => ({
+      key: col.name,
+      label: col.label || col.name,
+      ...(col.editOptions?.formioOptions || defaultControlOption),
+    }));
+    const dialogRef = this.dialogService.open(FormDialogComponent, {
+      data: {
+        formComponents,
+        formValue: item,
+        title: item ? `Edit ${item.name}` : `Add item`,
+        actions: [{ label: item ? 'Save' : 'Add', type: 'ok', color: 'primary', variant: 'stroked' }],
+      } as FormDialogData,
+    });
+    dialogRef.afterClosed().subscribe(result => {
+      if (!result) {
+        return;
+      }
+      console.log('Add/Edit form result:', result);
+      if (result.id) {
         //this.dataSource.updateInDataSource(result, index);
       } else {
         //this.dataSource.addToDataSource(result);
@@ -338,8 +345,8 @@ export class DataTableComponent<TModel extends DataModel> implements AfterViewIn
       data: {
         title: `Delete ${item.name}`,
         message: 'Are you sure you want to delete this item?',
-        actions: [{ label: 'Delete', color: 'warn', variant: 'raised', focus: true }],
-      },
+        actions: [],
+      } as ActionDialogData,
     });
     dialogRef.afterClosed().subscribe(result => {
       if (!result) {
