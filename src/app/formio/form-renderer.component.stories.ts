@@ -1,8 +1,4 @@
 import type { Meta, StoryObj } from '@storybook/angular';
-import {
-  FormioComponentOptions,
-  FormSubmissionData,
-} from '../../../projects/material-datatable/src/lib/formio/form-renderer.component';
 import { FormRendererComponent } from '../../../projects/material-datatable/src/public-api';
 
 const meta: Meta<FormRendererComponent> = {

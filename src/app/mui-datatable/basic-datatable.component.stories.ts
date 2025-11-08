@@ -49,6 +49,6 @@ export const ExternalData: Story = {
     onAddItem: (item: PeriodicElement) => alert(`Add item: ${JSON.stringify(item)}`),
     onUpdateItem: (item: PeriodicElement) => alert(`Update item: ${JSON.stringify(item)}`),
     onDeleteItem: (item: PeriodicElement) => alert(`Delete item with id: ${item.id}`),
-    onFilterChange: (filter: any) => alert(`Filter changed: ${JSON.stringify(filter)}`),
+    onFilterChange: (filter: PeriodicElement) => alert(`Filter changed: ${JSON.stringify(filter)}`),
   },
 };

@@ -1,11 +1,5 @@
 import { Component } from '@angular/core';
-import {
-  BasicDataTableComponent,
-  RemoteDataTableComponent,
-  ColumnDefinition,
-  TableOptions,
-  MaterialDatatableModule,
-} from '../../projects/material-datatable/src/public-api';
+import { MaterialDatatableModule } from '../../projects/material-datatable/src/public-api';
 
 @Component({
   selector: 'app-root',
