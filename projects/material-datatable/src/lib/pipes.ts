@@ -5,7 +5,7 @@ import { Pipe, PipeTransform } from '@angular/core';
  * Return Type obtained by optional @param type OR assignment type.
  */
 
-@Pipe({ name: 'cast', pure: true })
+@Pipe({ name: 'cast', pure: true, standalone: true })
 export class CastPipe implements PipeTransform {
   /**
    * Cast (input: unknown) into (T: Type) using Generics.

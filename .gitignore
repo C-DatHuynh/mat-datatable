@@ -6,6 +6,10 @@
 /out-tsc
 /bazel-out
 
+# Angular library specific
+*.tgz
+*.tar.gz
+
 # Node
 /node_modules
 npm-debug.log
@@ -41,9 +45,14 @@ testem.log
 .DS_Store
 Thumbs.db
 
+storybook-static
 *storybook.log
 src/stories
-.editorconfig
 
-.vscode
+# Library development
 documentation.json
+*.tsbuildinfo
+
+# IDE and editor specific
+.vscode/
+.editorconfig

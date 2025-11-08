@@ -1,11 +1,8 @@
 // basic-datatable.component.stories.ts
 import { type Meta, type StoryObj } from '@storybook/angular';
-import {
-  ColumnDefinition,
-  TableOptions,
-  BasicDataTableComponent,
-} from '../../../projects/material-datatable/src/public-api';
+import { ColumnDefinition, TableOptions } from '../interfaces';
 import { ELEMENT_DATA, PeriodicElement } from '../stories/fixture';
+import { BasicDataTableComponent } from './basic-datatable.component';
 
 const meta: Meta<BasicDataTableComponent<PeriodicElement>> = {
   title: 'Components/Basic MUI Datatable',

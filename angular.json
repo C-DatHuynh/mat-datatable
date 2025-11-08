@@ -132,6 +132,36 @@
           }
         }
       }
+    },
+    "material-datatable-lib": {
+      "projectType": "library",
+      "root": "projects/material-datatable",
+      "sourceRoot": "projects/material-datatable/src",
+      "prefix": "lib",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:ng-packagr",
+          "options": {
+            "project": "projects/material-datatable/ng-package.json"
+          },
+          "configurations": {
+            "production": {
+              "tsConfig": "projects/material-datatable/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "projects/material-datatable/tsconfig.lib.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "tsConfig": "projects/material-datatable/tsconfig.spec.json",
+            "polyfills": ["zone.js", "zone.js/testing"]
+          }
+        }
+      }
     }
   },
   "cli": {

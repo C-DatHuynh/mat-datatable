@@ -1,0 +1,32 @@
+{
+  "name": "material-datatable",
+  "version": "1.0.0",
+  "description": "A comprehensive Angular Material datatable library with advanced features",
+  "keywords": [
+    "angular",
+    "material",
+    "datatable",
+    "table",
+    "components"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/C-DatHuynh/mat-datatable.git"
+  },
+  "peerDependencies": {
+    "@angular/common": "^19.0.0",
+    "@angular/core": "^19.0.0",
+    "@angular/cdk": "^19.0.0",
+    "@angular/material": "^19.0.0",
+    "@angular/forms": "^19.0.0",
+    "@formio/angular": "^9.0.0",
+    "formiojs": "^4.21.0",
+    "rxjs": "~7.8.0"
+  },
+  "dependencies": {
+    "tslib": "^2.3.0"
+  },
+  "sideEffects": false
+}
