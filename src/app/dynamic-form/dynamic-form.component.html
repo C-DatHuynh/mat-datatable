@@ -1,7 +1,0 @@
-<form class="form-container" (ngSubmit)="onSubmit()" [formGroup]="form" [attr.id]="formId()" (reset)="onReset()">
-  @for (entry of controlOptionEntries(); track entry) {
-    <div class="form-row" [class.full-width]="entry[1].fullWidth">
-      <app-dynamic-form-control [option]="entry[1]" [form]="form" [key]="entry[0]" />
-    </div>
-  }
-</form>
