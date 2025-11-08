@@ -1,16 +1,16 @@
-// mui-datatable.component.stories.ts
+// remote-datatable.component.stories.ts
 import { Injectable } from '@angular/core';
 import { applicationConfig, type Meta, type StoryObj } from '@storybook/angular';
 import { delay, Observable, of } from 'rxjs';
 import { ColumnDefinition, TableOptions } from '../interfaces';
-import { DataTableComponent } from '../mui-datatable';
 import { ApiService, provideApiService } from '../services';
 import { DataFilters, DataPagination, DataSorting } from '../services/datastore.service';
 import { ELEMENT_DATA, PeriodicElement } from '../stories/fixture';
+import { RemoteDataTableComponent } from './remote-datatable.component';
 
-const meta: Meta<DataTableComponent<PeriodicElement>> = {
-  title: 'Components/MUI Datatable',
-  component: DataTableComponent,
+const meta: Meta<RemoteDataTableComponent<PeriodicElement>> = {
+  title: 'Components/Remote MUI Datatable',
+  component: RemoteDataTableComponent,
   tags: ['autodocs'],
   parameters: {
     docs: {
@@ -20,7 +20,7 @@ const meta: Meta<DataTableComponent<PeriodicElement>> = {
 };
 
 export default meta;
-type Story = StoryObj<DataTableComponent<PeriodicElement>>;
+type Story = StoryObj<RemoteDataTableComponent<PeriodicElement>>;
 
 const tableOptions: TableOptions = {
   jumpToPage: true,
@@ -40,20 +40,6 @@ const columns: ColumnDefinition[] = [
   },
   { name: 'description', label: 'Description', display: false, filter: false, sort: false },
 ];
-
-export const ExternalData: Story = {
-  args: {
-    title: 'Basic Material Datatable with External Data',
-    data: ELEMENT_DATA,
-    options: tableOptions,
-    columns: columns,
-  },
-  decorators: [
-    applicationConfig({
-      providers: [provideApiService({ useExternalData: true })],
-    }),
-  ],
-};
 
 // prettier-ignore
 @Injectable()

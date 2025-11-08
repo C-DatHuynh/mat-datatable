@@ -1,17 +1,6 @@
 // mui-datatable.component.ts
 import { CommonModule } from '@angular/common';
-import {
-  Component,
-  ViewChild,
-  AfterViewInit,
-  inject,
-  input,
-  computed,
-  Inject,
-  effect,
-  signal,
-  DestroyRef,
-} from '@angular/core';
+import { ViewChild, AfterViewInit, inject, input, computed, effect, signal, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
@@ -27,10 +16,10 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { FormDialogComponent, ActionDialogComponent, FormDialogData, ActionDialogData, DialogAction } from '../dialog';
 import { Action, ColumnDefinition, RowAction, TableOptions } from '../interfaces';
 import { SearchBarComponent } from '../search-bar/search-bar.component';
-import { API_SERVICE_TOKEN, ApiService, DataStoreService, DataTableService, NotificationService } from '../services';
+import { DataStoreService, DataTableService, NotificationService } from '../services';
 import { DataModel } from '../types';
 
-const SHARE_IMPORTS = [
+export const SHARE_IMPORTS = [
   CommonModule,
   MatTableModule,
   MatFormFieldModule,
@@ -64,17 +53,8 @@ const defaultTableOptions: TableOptions = {
   selectableRows: 'none',
 };
 
-@Component({
-  selector: 'app-mui-datatable',
-  templateUrl: './mui-datatable.component.html',
-  styleUrls: ['./mui-datatable.component.scss'],
-  standalone: true,
-  imports: SHARE_IMPORTS,
-  providers: [DataTableService, DataStoreService],
-})
-export class DataTableComponent<TModel extends DataModel> implements AfterViewInit {
+export abstract class DataTableComponent<TModel extends DataModel> implements AfterViewInit {
   //#region Signals
-  readonly data = input<TModel[]>();
   readonly title = input.required<string>();
   readonly columns = input.required<ColumnDefinition[]>();
   readonly options = input.required<TableOptions>();
@@ -158,10 +138,10 @@ export class DataTableComponent<TModel extends DataModel> implements AfterViewIn
   expandedElement!: TModel | null;
 
   constructor(
-    private readonly dataTableService: DataTableService<TModel>,
-    private readonly dataStoreService: DataStoreService<TModel>,
-    private readonly notificationService: NotificationService,
-    private readonly dialogService: MatDialog
+    protected readonly dataTableService: DataTableService<TModel>,
+    protected readonly dataStoreService: DataStoreService<TModel>,
+    protected readonly notificationService: NotificationService,
+    protected readonly dialogService: MatDialog
   ) {
     this.subscribeToState();
   }
@@ -202,7 +182,7 @@ export class DataTableComponent<TModel extends DataModel> implements AfterViewIn
     });
   }
 
-  private subscribeToState(): void {
+  protected subscribeToState(): void {
     effect(() => {
       const filteredData = this.dataStoreService.filteredData();
       this.updateTableData(filteredData);
@@ -212,16 +192,6 @@ export class DataTableComponent<TModel extends DataModel> implements AfterViewIn
       const totalItems = this.dataStoreService.totalItems();
       if (this.paginator && this.paginator.length !== totalItems) {
         this.paginator.length = totalItems;
-      }
-    });
-
-    effect(() => {
-      const pagination = this.dataStoreService.pagination();
-      const sorting = this.dataStoreService.sorting();
-      const filter = this.dataStoreService.filters();
-      const settings = this.dataStoreService.settings();
-      if (settings?.table.remote) {
-        this.dataTableService.populateItems(pagination, filter, sorting);
       }
     });
 
@@ -237,14 +207,7 @@ export class DataTableComponent<TModel extends DataModel> implements AfterViewIn
     this.dataSource.data = tableData;
   }
 
-  private loadInitialData(): void {
-    const inputData = this.data();
-    if (inputData) {
-      this.dataStoreService.setData(inputData);
-      return;
-    }
-    this.dataTableService.populateAllItems();
-  }
+  abstract loadInitialData(): void;
   //#endregion
 
   //#region Feature: Expandable Rows
@@ -284,6 +247,12 @@ export class DataTableComponent<TModel extends DataModel> implements AfterViewIn
   //#endregion
 
   //#region Feature: Popups
+
+  abstract changeFilter(data: any): void;
+  abstract addItem(item: TModel): void;
+  abstract updateItem(item: TModel): void;
+  abstract deleteItem(item: TModel): void;
+
   openFilterDialog(): void {
     const { filter = {} } = this.dataStoreService.filters();
     const formComponents = this.dataTableService.buildFormComponents('filter');
@@ -293,7 +262,7 @@ export class DataTableComponent<TModel extends DataModel> implements AfterViewIn
       formValue: filter,
       title: 'Filter',
       actionLabel: 'Apply',
-      onResult: ({ action, data }) => (action.type === 'ok' ? this.dataStoreService.setFilterForm(data) : null),
+      onResult: ({ action, data }) => (action.type === 'ok' ? this.changeFilter(data) : null),
     });
   }
 
@@ -313,9 +282,9 @@ export class DataTableComponent<TModel extends DataModel> implements AfterViewIn
         }
         if (isEdit && data.id) {
           console.log(action, data, isEdit);
-          this.dataTableService.updateItem(data, !!this.data());
+          this.updateItem(data);
         } else if (!isEdit) {
-          this.dataTableService.addItem(data, !!this.data());
+          this.addItem(data);
         }
       },
     });
@@ -325,7 +294,7 @@ export class DataTableComponent<TModel extends DataModel> implements AfterViewIn
     this.openActionDialog({
       title: `Delete ${item.name}`,
       message: 'Are you sure you want to delete this item?',
-      onResult: action => (action.type === 'ok' ? this.dataTableService.deleteItem(item.id, !!this.data()) : null),
+      onResult: action => (action.type === 'ok' ? this.deleteItem(item) : null),
     });
   }
 
