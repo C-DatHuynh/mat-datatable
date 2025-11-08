@@ -1,6 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
 import { catchError, finalize, Observable, throwError } from 'rxjs';
-import { v4 as uuidv4 } from 'uuid';
 import { ColumnDefinition } from '../interfaces';
 import { DataModel } from '../types';
 import { API_SERVICE_TOKEN, ApiService } from './api.service';
@@ -115,8 +114,7 @@ export class BasicDataTableService<TModel extends DataModel> extends DataTableSe
 
   addItem(item: TModel): void {
     // Generate a temporary ID for new items if they don't have one
-    const id = item.id || uuidv4();
-    this.dataStoreService.addDataItem(id, item);
+    this.dataStoreService.addDataItem('', item);
   }
 
   deleteItem(id: string | number): void {

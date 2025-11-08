@@ -1,3 +1,4 @@
-import { DataTableComponent } from './mui-datatable.component';
+import { BasicDataTableComponent } from './basic-datatable.component';
+import { RemoteDataTableComponent } from './remote-datatable.component';
 
-export { DataTableComponent };
+export { BasicDataTableComponent, RemoteDataTableComponent };
