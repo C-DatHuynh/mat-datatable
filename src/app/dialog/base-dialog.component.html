@@ -1,0 +1,49 @@
+<div class="dialog-header">
+  <h2 mat-dialog-title>{{ options().title }}</h2>
+  <button *ngIf="options().showCloseButton !== false" mat-icon-button class="close-button" (click)="onClose()" aria-label="Close dialog">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+<mat-dialog-content class="mat-typography dialog-content">
+  <ng-content></ng-content>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <ng-container *ngFor="let action of allActions()">
+    <button
+      *ngIf="action.variant === 'basic' || !action.variant"
+      mat-button
+      [color]="action.color"
+      [disabled]="action.disabled"
+      [attr.cdkFocusInitial]="action.focus ? '' : null"
+      (click)="onAction(action)">
+      {{ action.label }}
+    </button>
+    <button
+      *ngIf="action.variant === 'raised'"
+      mat-raised-button
+      [color]="action.color"
+      [disabled]="action.disabled"
+      [attr.cdkFocusInitial]="action.focus ? '' : null"
+      (click)="onAction(action)">
+      {{ action.label }}
+    </button>
+    <button
+      *ngIf="action.variant === 'stroked'"
+      mat-stroked-button
+      [color]="action.color"
+      [disabled]="action.disabled"
+      [attr.cdkFocusInitial]="action.focus ? '' : null"
+      (click)="onAction(action)">
+      {{ action.label }}
+    </button>
+    <button
+      *ngIf="action.variant === 'flat'"
+      mat-flat-button
+      [color]="action.color"
+      [disabled]="action.disabled"
+      [attr.cdkFocusInitial]="action.focus ? '' : null"
+      (click)="onAction(action)">
+      {{ action.label }}
+    </button>
+  </ng-container>
+</mat-dialog-actions>

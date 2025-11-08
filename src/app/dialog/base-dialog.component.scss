@@ -1,0 +1,42 @@
+@use '@angular/material' as mat;
+
+:root {
+  @include mat.dialog-overrides(
+    (
+      container-max-width: 736px,
+      container-min-width: 480px,
+    )
+  );
+}
+
+.dialog-content {
+  font-size: 1.125rem;
+  min-height: 50px;
+  padding: 20px 24px 20px 24px;
+}
+
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.dialog-header h2[mat-dialog-title] {
+  margin: 0;
+  flex: 1;
+}
+
+.close-button {
+  position: relative;
+  top: 8px;
+  right: 8px;
+  flex-shrink: 0;
+}
+
+.close-icon {
+  transition: 1s ease-in-out;
+}
+
+.close-icon:hover {
+  transform: rotate(180deg);
+}

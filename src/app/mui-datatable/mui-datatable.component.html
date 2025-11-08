@@ -5,22 +5,23 @@
     <h2>{{ title() }}</h2>
   </div>
   <mat-toolbar class="mui-datatable-toolbar">
-    @if (tableOptions().search !== false) {
-      <mat-form-field appearance="fill" class="filter-field" subscriptSizing="dynamic" style="font-size: 12px">
-        <mat-label>Search</mat-label>
-        <input matInput (keyup)="applySearch($event)" [placeholder]="tableOptions().searchPlaceholder" #input />
-      </mat-form-field>
+    @if (tableOptions().canSearch !== false) {
+      <app-search-bar
+        [placeholder]="tableOptions().searchPlaceholder || 'Search table data...'"
+        (search)="applySearch($event)"
+        (clear)="onSearchClear()">
+      </app-search-bar>
     }
     <span class="example-spacer"></span>
     @for (action of actions(); track action) {
-      <button matIconButton [disabled]="action.disabled" (click)="action.onClick($event)">
+      <button mat-raised-button color="primary" [disabled]="action.disabled" (click)="action.onClick()">
         <mat-icon>{{ action.icon }}</mat-icon>
         {{ action.label }}
       </button>
     }
   </mat-toolbar>
 
-  @if (dataSource.loading$ | async) {
+  @if (loading()) {
     <div class="example-loading-shade">
       <mat-spinner></mat-spinner>
     </div>
@@ -29,7 +30,7 @@
   <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z8" multiTemplateDataRows="tableOptions().expandableRows === true">
     @for (column of columnsToDisplay(); track column) {
       <ng-container matColumnDef="{{ column.name }}">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header disabled="{{ column.options.sort === false }}">{{ column.label || column.name }}</th>
+        <th mat-header-cell *matHeaderCellDef mat-sort-header disabled="{{ column.sort === false }}">{{ column.label || column.name }}</th>
         <td mat-cell *matCellDef="let element">{{ element[column.name] }}</td>
       </ng-container>
     }
@@ -40,7 +41,8 @@
         <th mat-header-cell *matHeaderCellDef aria-label="row actions">&nbsp;</th>
         <td mat-cell *matCellDef="let element">
           <button
-            matIconButton
+            mat-icon-button
+            color="primary"
             aria-label="expand row"
             (click)="toggle(element); $event.stopPropagation()"
             class="example-toggle-button"
@@ -74,7 +76,7 @@
         <th mat-header-cell *matHeaderCellDef aria-label="row actions">&nbsp;</th>
         <td mat-cell *matCellDef="let element; let i = dataIndex">
           @for (action of rowActions(); track action) {
-            <button matIconButton [disabled]="action.disabled" (click)="onRowActionClicked($event, action, element, i)">
+            <button mat-icon-button color="accent" [disabled]="action.disabled" (click)="onRowActionClicked($event, action, element, i)">
               <mat-icon>{{ action.icon }}</mat-icon>
             </button>
           }
@@ -96,7 +98,7 @@
     }
 
     <!-- Row shown when there is no matching data. -->
-    @if ((dataSource.loading$ | async) === false) {
+    @if (!loading()) {
       <tr class="example-element-row" *matNoDataRow>
         <td class="mdc-data-table__cell" style="text-align: center" [attr.colspan]="columnNamesToDisplay().length">No data matching the filter</td>
       </tr>
@@ -107,15 +109,15 @@
     @if (tableOptions().jumpToPage === true) {
       <div class="mat-mdc-paginator-page-size-label">Go to page:</div>
       <mat-form-field appearance="outline" subscriptSizing="dynamic" class="paginator-page-select">
-        <mat-select [value]="paginator?.pageIndex" (selectionChange)="jumpToPage($event)" hideSingleSelectionIndicator>
+        <mat-select [value]="paginator?.pageIndex" (selectionChange)="jumpToPage($event.source)" hideSingleSelectionIndicator>
           @for (pageNumber of getPageList(); track pageNumber) {
-            <mat-option [value]="pageNumber - 1">{{ pageNumber }}</mat-option>
+            <mat-option [value]="pageNumber">{{ pageNumber + 1 }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
     }
     <mat-paginator
-      [pageSizeOptions]="tableOptions().rowsPerPageOptions"
+      [pageSizeOptions]="tableOptions().rowsPerPageOptions || [5, 10, 25]"
       [pageSize]="tableOptions().rowsPerPage"
       showFirstLastButtons
       aria-label="Select page of periodic elements">

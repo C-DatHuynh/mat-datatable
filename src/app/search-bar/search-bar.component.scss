@@ -1,0 +1,29 @@
+.search-field {
+  min-width: 300px;
+  max-width: 400px;
+
+  .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+  }
+
+  .mat-mdc-form-field-icon-prefix,
+  .mat-mdc-form-field-icon-suffix {
+    color: rgba(0, 0, 0, 0.54);
+
+    .mat-mdc-icon-button {
+      width: 20px;
+      height: 20px;
+      line-height: 20px;
+
+      .mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
+
+      &:hover {
+        background-color: rgba(0, 0, 0, 0.04);
+      }
+    }
+  }
+}

@@ -1,4 +1,4 @@
-import { DataTableComponent, RemoteDatatableComponent } from './mui-datatable.component';
-import { DataService, DataTableService } from './mui-datatable.service';
+import { BasicDataTableComponent } from './basic-datatable.component';
+import { RemoteDataTableComponent } from './remote-datatable.component';
 
-export { DataTableComponent, RemoteDatatableComponent, DataService, DataTableService };
+export { BasicDataTableComponent, RemoteDataTableComponent };
