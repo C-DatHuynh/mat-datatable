@@ -1,11 +1,8 @@
 // basic-datatable.component.stories.ts
 import { type Meta, type StoryObj } from '@storybook/angular';
-import {
-  ColumnDefinition,
-  TableOptions,
-  BasicDataTableComponent,
-} from '../../../projects/material-datatable/src/public-api';
+import { ColumnDefinition, TableOptions } from '../interfaces';
 import { ELEMENT_DATA, PeriodicElement } from '../stories/fixture';
+import { BasicDataTableComponent } from './basic-datatable.component';
 
 const meta: Meta<BasicDataTableComponent<PeriodicElement>> = {
   title: 'Components/Basic MUI Datatable',
@@ -49,6 +46,6 @@ export const ExternalData: Story = {
     onAddItem: (item: PeriodicElement) => alert(`Add item: ${JSON.stringify(item)}`),
     onUpdateItem: (item: PeriodicElement) => alert(`Update item: ${JSON.stringify(item)}`),
     onDeleteItem: (item: PeriodicElement) => alert(`Delete item with id: ${item.id}`),
-    onFilterChange: (filter: PeriodicElement) => alert(`Filter changed: ${JSON.stringify(filter)}`),
+    onFilterChange: (filter: any) => alert(`Filter changed: ${JSON.stringify(filter)}`),
   },
 };

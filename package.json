@@ -1,10 +1,29 @@
 {
-  "name": "material-datatable",
-  "version": "0.0.0",
+  "name": "@c-dathuynh/material-datatable",
+  "version": "1.0.0",
+  "description": "A comprehensive Angular Material datatable library with advanced features",
+  "keywords": [
+    "angular",
+    "material",
+    "datatable",
+    "table",
+    "components"
+  ],
+  "author": "C-DatHuynh",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/C-DatHuynh/mat-datatable.git"
+  },
+  "homepage": "https://github.com/C-DatHuynh/mat-datatable#readme",
+  "bugs": {
+    "url": "https://github.com/C-DatHuynh/mat-datatable/issues"
+  },
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "build:lib": "ng build material-datatable-lib",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "storybook": "ng run material-datatable:storybook",
@@ -12,7 +31,6 @@
     "lint": "ng lint",
     "format": "prettier --write ."
   },
-  "private": true,
   "dependencies": {
     "@angular/cdk": "^19.2.17",
     "@angular/common": "^19.2.0",
@@ -57,6 +75,7 @@
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
+    "ng-packagr": "^19.2.2",
     "prettier": "^3.5.3",
     "prettier-plugin-sort-re-exports": "^0.1.0",
     "storybook": "^8.6.14",

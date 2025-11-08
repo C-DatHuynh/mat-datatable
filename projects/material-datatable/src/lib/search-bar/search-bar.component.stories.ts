@@ -1,5 +1,5 @@
 import { Meta, StoryObj } from '@storybook/angular';
-import { SearchBarComponent } from '../../../projects/material-datatable/src/public-api';
+import { SearchBarComponent } from './search-bar.component';
 
 const meta: Meta<SearchBarComponent> = {
   title: 'Components/SearchBar',

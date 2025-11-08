@@ -1,6 +1,16 @@
 // mui-datatable.component.ts
 import { CommonModule } from '@angular/common';
-import { ViewChild, AfterViewInit, inject, input, computed, effect, signal, DestroyRef } from '@angular/core';
+import {
+  ViewChild,
+  AfterViewInit,
+  inject,
+  input,
+  computed,
+  effect,
+  signal,
+  DestroyRef,
+  Directive,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
@@ -53,6 +63,7 @@ const defaultTableOptions: TableOptions = {
   selectableRows: 'none',
 };
 
+@Directive()
 export abstract class DataTableComponent<TModel extends DataModel> implements AfterViewInit {
   //#region Signals
   readonly title = input.required<string>();

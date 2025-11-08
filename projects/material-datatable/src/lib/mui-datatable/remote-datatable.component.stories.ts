@@ -2,19 +2,11 @@
 import { Injectable } from '@angular/core';
 import { applicationConfig, type Meta, type StoryObj } from '@storybook/angular';
 import { delay, Observable, of } from 'rxjs';
-import {
-  DataFilters,
-  DataPagination,
-  DataSorting,
-} from '../../../projects/material-datatable/src/lib/services/datastore.service';
-import {
-  ColumnDefinition,
-  TableOptions,
-  RemoteDataTableComponent,
-  ApiService,
-  provideApiService,
-} from '../../../projects/material-datatable/src/public-api';
+import { ColumnDefinition, TableOptions } from '../interfaces';
+import { ApiService, provideApiService } from '../services';
+import { DataFilters, DataPagination, DataSorting } from '../services/datastore.service';
 import { ELEMENT_DATA, PeriodicElement } from '../stories/fixture';
+import { RemoteDataTableComponent } from './remote-datatable.component';
 
 const meta: Meta<RemoteDataTableComponent<PeriodicElement>> = {
   title: 'Components/Remote MUI Datatable',
