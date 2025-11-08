@@ -24,8 +24,7 @@ import { MatSelectModule, MatSelect } from '@angular/material/select';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableModule, MatTable, MatTableDataSource } from '@angular/material/table';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { catchError, finalize, Observable, throwError } from 'rxjs';
-import { FormDialogComponent, ActionDialogComponent, FormDialogData, ActionDialogData } from '../dialog';
+import { FormDialogComponent, ActionDialogComponent, FormDialogData, ActionDialogData, DialogAction } from '../dialog';
 import { Action, ColumnDefinition, RowAction, TableOptions } from '../interfaces';
 import { SearchBarComponent } from '../search-bar/search-bar.component';
 import { API_SERVICE_TOKEN, ApiService, DataStoreService, DataTableService, NotificationService } from '../services';
@@ -63,10 +62,6 @@ const defaultTableOptions: TableOptions = {
   canFilter: true,
   jumpToPage: false,
   selectableRows: 'none',
-};
-
-const defaultControlOption: object = {
-  type: 'textfield',
 };
 
 @Component({
@@ -163,7 +158,6 @@ export class DataTableComponent<TModel extends DataModel> implements AfterViewIn
   expandedElement!: TModel | null;
 
   constructor(
-    @Inject(API_SERVICE_TOKEN) private readonly apiService: ApiService<TModel>,
     private readonly dataTableService: DataTableService<TModel>,
     private readonly dataStoreService: DataStoreService<TModel>,
     private readonly notificationService: NotificationService,
@@ -213,20 +207,22 @@ export class DataTableComponent<TModel extends DataModel> implements AfterViewIn
       const filteredData = this.dataStoreService.filteredData();
       this.updateTableData(filteredData);
     });
+
+    effect(() => {
+      const totalItems = this.dataStoreService.totalItems();
+      if (this.paginator && this.paginator.length !== totalItems) {
+        this.paginator.length = totalItems;
+      }
+    });
+
     effect(() => {
       const pagination = this.dataStoreService.pagination();
       const sorting = this.dataStoreService.sorting();
       const filter = this.dataStoreService.filters();
       const settings = this.dataStoreService.settings();
       if (settings?.table.remote) {
-        this.callApi(this.apiService.listRemote(pagination, filter, sorting)).subscribe(
-          (result: { data: TModel[]; total: number }) => {
-            this.dataStoreService.setData(result.data);
-            this.paginator.length = result.total;
-          }
-        );
+        this.dataTableService.populateItems(pagination, filter, sorting);
       }
-      return;
     });
 
     // Subscribe to loading state
@@ -247,7 +243,7 @@ export class DataTableComponent<TModel extends DataModel> implements AfterViewIn
       this.dataStoreService.setData(inputData);
       return;
     }
-    this.callApi(this.apiService.list()).subscribe((resources: TModel[]) => this.dataStoreService.setData(resources));
+    this.dataTableService.populateAllItems();
   }
   //#endregion
 
@@ -290,77 +286,94 @@ export class DataTableComponent<TModel extends DataModel> implements AfterViewIn
   //#region Feature: Popups
   openFilterDialog(): void {
     const { filter = {} } = this.dataStoreService.filters();
-    const formComponents = this.columns()
-      .filter(column => column.filter !== false)
-      .map(col => ({
-        key: col.name,
-        label: col.label || col.name,
-        ...(col.filterOptions?.formioOptions || defaultControlOption),
-      }));
-    const dialogRef = this.dialogService.open(FormDialogComponent, {
-      data: {
-        formComponents,
-        formValue: filter,
-        title: 'Filter',
-        actions: [{ label: 'Apply', type: 'ok', color: 'primary', variant: 'stroked' }],
-      } as FormDialogData,
-    });
-    dialogRef.afterClosed().subscribe(result => {
-      if (!result) {
-        return;
-      }
-      console.log('Filter form result:', result);
+    const formComponents = this.dataTableService.buildFormComponents('filter');
+
+    this.openFormDialog({
+      formComponents,
+      formValue: filter,
+      title: 'Filter',
+      actionLabel: 'Apply',
+      onResult: ({ action, data }) => (action.type === 'ok' ? this.dataStoreService.setFilterForm(data) : null),
     });
   }
 
   openAddEditDialog(item?: TModel): void {
-    const formComponents = this.columns().map(col => ({
-      key: col.name,
-      label: col.label || col.name,
-      ...(col.editOptions?.formioOptions || defaultControlOption),
-    }));
-    const dialogRef = this.dialogService.open(FormDialogComponent, {
-      data: {
-        formComponents,
-        formValue: item,
-        title: item ? `Edit ${item.name}` : `Add item`,
-        actions: [{ label: item ? 'Save' : 'Add', type: 'ok', color: 'primary', variant: 'stroked' }],
-      } as FormDialogData,
-    });
-    dialogRef.afterClosed().subscribe(result => {
-      if (!result) {
-        return;
-      }
-      console.log('Add/Edit form result:', result);
-      if (result.id) {
-        //this.dataSource.updateInDataSource(result, index);
-      } else {
-        //this.dataSource.addToDataSource(result);
-      }
+    const formComponents = this.dataTableService.buildFormComponents('edit');
+    const isEdit = !!item;
+
+    this.openFormDialog({
+      formComponents,
+      formValue: item,
+      title: isEdit ? `Edit ${item.name}` : 'Add item',
+      actionLabel: isEdit ? 'Save' : 'Add',
+      onResult: ({ action, data }) => {
+        console.log('Dialog result action:', action, data, isEdit);
+        if (action.type !== 'ok') {
+          return;
+        }
+        if (isEdit && data.id) {
+          console.log(action, data, isEdit);
+          this.dataTableService.updateItem(data, !!this.data());
+        } else if (!isEdit) {
+          this.dataTableService.addItem(data, !!this.data());
+        }
+      },
     });
   }
 
   openDeleteConfirmDialog(item: TModel, index: number): void {
+    this.openActionDialog({
+      title: `Delete ${item.name}`,
+      message: 'Are you sure you want to delete this item?',
+      onResult: action => (action.type === 'ok' ? this.dataTableService.deleteItem(item.id, !!this.data()) : null),
+    });
+  }
+
+  private openFormDialog(config: {
+    formComponents: any[];
+    formValue: any;
+    title: string;
+    actionLabel: string;
+    onResult: (result: { action: DialogAction; data: any }) => void;
+  }): void {
+    const dialogRef = this.dialogService.open(FormDialogComponent, {
+      data: {
+        formComponents: config.formComponents,
+        formValue: config.formValue,
+        title: config.title,
+        actions: [
+          {
+            label: config.actionLabel,
+            type: 'ok',
+            color: 'primary',
+            variant: 'stroked',
+          },
+        ],
+      } as FormDialogData,
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        config.onResult(result);
+      }
+    });
+  }
+
+  private openActionDialog(config: { title: string; message: string; onResult: (action: DialogAction) => void }): void {
     const dialogRef = this.dialogService.open(ActionDialogComponent, {
       data: {
-        title: `Delete ${item.name}`,
-        message: 'Are you sure you want to delete this item?',
+        title: config.title,
+        message: config.message,
         actions: [],
       } as ActionDialogData,
     });
     dialogRef.afterClosed().subscribe(result => {
-      if (!result) {
-        return;
-      }
-      if (this.data()) {
-        this.dataStoreService.removeDataItem(item.id);
-      } else {
-        this.callApi(this.apiService.remove(item.id)).subscribe(() => {
-          this.dataStoreService.removeDataItem(item.id);
-        });
+      if (result) {
+        config.onResult(result);
       }
     });
   }
+
   //#endregion
 
   //#region Feature: Filter
@@ -389,21 +402,6 @@ export class DataTableComponent<TModel extends DataModel> implements AfterViewIn
   }
 
   //#region Helper
-  callApi<T>(apiCall: Observable<T>): Observable<T> {
-    this.dataStoreService.setLoading(true);
-    this.dataStoreService.clearError();
 
-    return apiCall.pipe(
-      catchError(error => {
-        const errorMsg = error?.message || 'An error occurred';
-        this.dataStoreService.setError(errorMsg);
-        console.error('API Error:', error);
-        return throwError(() => error);
-      }),
-      finalize(() => {
-        this.dataStoreService.setLoading(false);
-      })
-    );
-  }
   //#endregion
 }

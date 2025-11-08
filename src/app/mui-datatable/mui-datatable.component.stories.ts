@@ -22,8 +22,6 @@ const meta: Meta<DataTableComponent<PeriodicElement>> = {
 export default meta;
 type Story = StoryObj<DataTableComponent<PeriodicElement>>;
 
-const selectOptions = ELEMENT_DATA.map(item => ({ key: item.symbol, value: item.symbol }));
-
 const tableOptions: TableOptions = {
   jumpToPage: true,
 };

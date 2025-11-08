@@ -14,7 +14,9 @@ export interface ActionDialogData {
 @Component({
   selector: 'app-action-dialog',
   template: `
-    <app-base-dialog [options]="{ title: data.title, actions: data.actions, showCloseButton: true }" (actionDone)="onAction($event)">
+    <app-base-dialog
+      [options]="{ title: data.title, actions: data.actions, showCloseButton: true }"
+      (actionDone)="onAction($event)">
       <p>{{ data.message }}</p>
     </app-base-dialog>
   `,
@@ -29,7 +31,6 @@ export class ActionDialogComponent {
   ) {}
 
   onAction(action: DialogAction): void {
-    const { type } = action;
-    this.dialogRef.close(type !== 'cancel');
+    this.dialogRef.close(action);
   }
 }

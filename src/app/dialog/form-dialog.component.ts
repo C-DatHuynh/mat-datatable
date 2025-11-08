@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, Inject, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { FormRendererComponent } from '../formio';
+import { FormRendererComponent, FormSubmissionData } from '../formio';
 import { PrimitiveType } from '../types';
 import { splitArrayIntoChunks } from '../utils';
 import { BaseDialogComponent, DialogAction, DialogOptions } from './base-dialog.component';
@@ -20,7 +20,11 @@ export interface FormDialogData {
   selector: 'app-form-dialog',
   template: `
     <app-base-dialog [options]="dialogOptions" (actionDone)="onAction($event)">
-      <app-form-renderer #dialogForm [form]="formOptions" [submission]="formValue" (formSubmit)="onSubmit($event)"></app-form-renderer>
+      <app-form-renderer
+        #dialogForm
+        [form]="formOptions"
+        [submission]="formValue"
+        (formSubmit)="onSubmit($event)"></app-form-renderer>
     </app-base-dialog>
   `,
   imports: [BaseDialogComponent, FormRendererComponent],
@@ -41,28 +45,21 @@ export class FormDialogComponent {
   ) {
     this.columns = this.data.columns;
     this.formOptions = { type: 'form', components: this.setLayout(this.data.formComponents, this.columns) };
-    this.formValue = { data: this.data.formValue };
+    this.formValue = { data: this.data.formValue || {} };
     this.dialogOptions = { title: this.data.title, actions: this.data.actions, showCloseButton: true };
   }
 
   onAction(value: DialogAction): void {
     const { type } = value;
-    switch (type) {
-      case 'ok':
-        console.log('submitting form from dialog action');
-        this.dialogForm.submit();
-        return;
-      case 'cancel':
-        this.dialogRef.close();
-        return;
-      default:
-        return;
+    if (type === 'ok') {
+      this.dialogForm.submit();
+    } else {
+      this.dialogRef.close({ action: value });
     }
   }
 
-  onSubmit(data: object) {
-    console.log('FormDialogComponent - onSubmit data:', data);
-    this.dialogRef.close(data);
+  onSubmit(data: FormSubmissionData): void {
+    this.dialogRef.close({ action: { type: 'ok' }, data: data.data });
   }
 
   setLayout(components: object[], columns: number = 2) {

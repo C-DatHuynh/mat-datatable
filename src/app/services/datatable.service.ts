@@ -1,9 +1,111 @@
-import { Injectable } from '@angular/core';
+import { Inject, Injectable } from '@angular/core';
+import { catchError, finalize, Observable, throwError } from 'rxjs';
+import { DialogAction } from '../dialog';
 import { ColumnDefinition } from '../interfaces';
 import { DataModel } from '../types';
+import { API_SERVICE_TOKEN, ApiService } from './api.service';
+import { DataFilters, DataPagination, DataSorting, DataStoreService } from './datastore.service';
+
+const defaultControlOption: object = {
+  type: 'textfield',
+};
 
 @Injectable()
 export class DataTableService<TModel extends DataModel> {
+  constructor(
+    private readonly dataStoreService: DataStoreService<TModel>,
+    @Inject(API_SERVICE_TOKEN) private readonly apiService: ApiService<TModel>
+  ) {}
+
+  buildFormComponents(type: 'filter' | 'edit') {
+    const settings = this.dataStoreService.$settings();
+    const columns = settings?.columns || [];
+    const filteredColumns = type === 'filter' ? columns.filter(column => column.filter !== false) : columns;
+
+    return filteredColumns.map(col => ({
+      key: col.name,
+      label: col.label || col.name,
+      ...(type === 'filter'
+        ? col.filterOptions?.formioOptions || defaultControlOption
+        : col.editOptions?.formioOptions || defaultControlOption),
+    }));
+  }
+
+  handleAddEditResult(result: any, isEdit: boolean): void {
+    console.log('Add/Edit form result:', result);
+
+    if (isEdit && result.id) {
+      this.updateItem(result);
+    } else if (!isEdit) {
+      this.addItem(result);
+    }
+  }
+
+  callApi<T>(apiCall: Observable<T>): Observable<T> {
+    this.dataStoreService.setLoading(true);
+    this.dataStoreService.clearError();
+
+    return apiCall.pipe(
+      catchError(error => {
+        const errorMsg = error?.message || 'An error occurred';
+        this.dataStoreService.setError(errorMsg);
+        console.error('API Error:', error);
+        return throwError(() => error);
+      }),
+      finalize(() => {
+        this.dataStoreService.setLoading(false);
+      })
+    );
+  }
+
+  populateItems(pagination: DataPagination | null, filter: DataFilters | null, sorting: DataSorting | null): void {
+    this.callApi(this.apiService.listRemote(pagination, filter, sorting)).subscribe(
+      (result: { data: TModel[]; total: number }) => {
+        this.dataStoreService.setData(result.data);
+        this.dataStoreService.setTotalItems(result.total);
+      }
+    );
+  }
+
+  populateAllItems(): void {
+    this.callApi(this.apiService.list()).subscribe((resources: TModel[]) => this.dataStoreService.setData(resources));
+  }
+
+  updateItem(item: TModel, hasInputData: boolean = true): void {
+    if (hasInputData) {
+      this.dataStoreService.updateDataItem(item.id, item);
+    } else {
+      // Remove id from the update payload as required by the API
+      const { id, ...updatePayload } = item;
+      this.callApi(
+        this.apiService.update(item.id, updatePayload as Exclude<TModel, { id: string | number }>)
+      ).subscribe(updatedItem => {
+        this.dataStoreService.updateDataItem(updatedItem.id, updatedItem);
+      });
+    }
+  }
+
+  addItem(item: TModel, hasInputData: boolean = true): void {
+    console.log('Adding item:', item, hasInputData);
+    if (hasInputData) {
+      this.dataStoreService.addDataItem(item);
+    } else {
+      this.callApi(this.apiService.add(item)).subscribe((createdItem: TModel) => {
+        this.dataStoreService.addDataItem(createdItem.id, createdItem);
+      });
+    }
+  }
+
+  deleteItem(id: string | number, hasInputData: boolean = true): void {
+    if (hasInputData) {
+      this.dataStoreService.removeDataItem(id);
+    } else {
+      this.callApi(this.apiService.remove(id)).subscribe(() => {
+        this.dataStoreService.removeDataItem(id);
+      });
+    }
+  }
+
   private generateCsvContent(columnConfig: ColumnDefinition[], data: TModel[]): string {
     const header = columnConfig.map(col => col.label || col.name).join(',') + '\n';
     const rows = data

@@ -45,7 +45,6 @@ export class BaseDialogComponent {
 
   allActions = computed(() => {
     const { actions } = this.options();
-    console.log('Initial actions:', actions);
     // Add default cancel action if none exists and not explicitly disabled
     const hasCancelAction = actions.some(action => action.type === 'cancel');
     if (!hasCancelAction) {

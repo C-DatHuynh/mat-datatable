@@ -31,6 +31,7 @@ export interface DataStoreSettings {
 export class DataStoreService<T extends DataModel> {
   //#region Signals
   $data = signal<T[]>([]);
+  $totalItems = signal<number>(0);
   $selectedItem = signal<T | null>(null);
   $selectedItems = signal<T[]>([]);
   $filters = signal<DataFilters>({
@@ -74,6 +75,10 @@ export class DataStoreService<T extends DataModel> {
 
   get data() {
     return this.$data.asReadonly();
+  }
+
+  get totalItems() {
+    return this.$totalItems.asReadonly();
   }
 
   get selectedItem() {
@@ -134,10 +139,15 @@ export class DataStoreService<T extends DataModel> {
 
   setData(data: T[]): void {
     this.$data.set(data);
+    this.$totalItems.set(data.length);
   }
 
-  addDataItem(item: T): void {
-    this.$data.update(currentData => [item, ...currentData]);
+  setTotalItems(total: number): void {
+    this.$totalItems.set(total);
+  }
+
+  addDataItem(id: string | number, item: T): void {
+    this.$data.update(currentData => [...currentData, { ...item, id }]);
   }
 
   updateDataItem(id: string | number, updates: Partial<T>): void {

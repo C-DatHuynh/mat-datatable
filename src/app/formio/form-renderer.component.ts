@@ -25,7 +25,7 @@ export interface FormioComponentOptions {
 })
 export class FormRendererComponent implements OnInit {
   @Input({ required: true }) form: any = null;
-  @Input() submission: any = { data: {} };
+  @Input({ required: true }) submission: any = null;
   @Input() options: FormioComponentOptions | null = null;
 
   @Output() formSubmit = new EventEmitter<FormSubmissionData>();
