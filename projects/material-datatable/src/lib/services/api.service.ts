@@ -6,7 +6,11 @@ import { DataFilters, DataPagination, DataSorting } from './datastore.service';
 export interface ApiServiceInterface<T> {
   setHeaders(header: HttpHeaders): void;
   list(): Observable<T[]>;
-  listRemote(pagination: DataPagination | null, filters: DataFilters | null, sorting: DataSorting | null): Observable<{ data: T[]; total: number }>;
+  listRemote(
+    pagination: DataPagination | null,
+    filters: DataFilters | null,
+    sorting: DataSorting | null
+  ): Observable<{ data: T[]; total: number }>;
   add(dto: T): Observable<T>;
   update(id: number | string, dto: Exclude<T, { id: number | string }>): Observable<T>;
   remove(id: number | string): Observable<void>;
@@ -35,7 +39,11 @@ export class ApiService<T> implements ApiServiceInterface<T> {
     return this.http.get<T[]>(this.baseUrl, { headers: this.headers });
   }
 
-  listRemote(pagination: DataPagination | null, filters: DataFilters | null, sorting: DataSorting | null): Observable<{ data: T[]; total: number }> {
+  listRemote(
+    pagination: DataPagination | null,
+    filters: DataFilters | null,
+    sorting: DataSorting | null
+  ): Observable<{ data: T[]; total: number }> {
     return new Observable<{ data: T[]; total: number }>();
   }
 

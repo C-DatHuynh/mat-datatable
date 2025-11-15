@@ -1,6 +1,11 @@
 <div class="dialog-header">
   <h2 mat-dialog-title>{{ options().title }}</h2>
-  <button *ngIf="options().showCloseButton !== false" mat-icon-button class="close-button" (click)="onClose()" aria-label="Close dialog">
+  <button
+    *ngIf="options().showCloseButton !== false"
+    mat-icon-button
+    class="close-button"
+    (click)="onClose()"
+    aria-label="Close dialog">
     <mat-icon>close</mat-icon>
   </button>
 </div>

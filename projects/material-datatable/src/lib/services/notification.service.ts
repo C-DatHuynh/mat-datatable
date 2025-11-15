@@ -52,7 +52,12 @@ export class NotificationService {
   /**
    * Show notification with custom type
    */
-  private showNotification(type: 'success' | 'error' | 'warning' | 'info', title: string, message: string, duration: number): void {
+  private showNotification(
+    type: 'success' | 'error' | 'warning' | 'info',
+    title: string,
+    message: string,
+    duration: number
+  ): void {
     const notification: NotificationMessage = {
       id: this.generateId(),
       type,
