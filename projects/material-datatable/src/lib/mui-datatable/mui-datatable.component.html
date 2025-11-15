@@ -1,6 +1,6 @@
 <!-- mui-datatable.component.html -->
 
-<div class="mui-data-table-container" [attr.id]="title()">
+<div class="mui-datatable-container" [attr.id]="title()">
   <div class="mui-datatable-title">
     <h2>{{ title() }}</h2>
   </div>
@@ -12,7 +12,7 @@
         (clear)="onSearchClear()">
       </app-search-bar>
     }
-    <span class="example-spacer"></span>
+    <span class="spacer"></span>
     @for (action of actions(); track action) {
       <button mat-raised-button color="primary" [disabled]="action.disabled" (click)="action.onClick()">
         <mat-icon>{{ action.icon }}</mat-icon>
@@ -20,6 +20,25 @@
       </button>
     }
   </mat-toolbar>
+  @if ((filters().filter || {} | filterEntries).length > 0) {
+    <section class="filter-chips">
+      <span class="filter-chips-label">Applied filters:</span>
+      <mat-chip-grid>
+        @for (keyword of filters().filter || {} | filterEntries; track keyword) {
+          <mat-chip-row (removed)="removeFilterEntry(keyword)">
+            {{ keyword[0] }}={{ keyword[1] }}
+            <button matChipRemove [attr.aria-label]="'remove template form' + keyword">
+              <mat-icon>cancel</mat-icon>
+            </button>
+          </mat-chip-row>
+        }
+      </mat-chip-grid>
+      <button mat-stroked-button (click)="clearFilterEntries()" class="clear-filters-btn">
+        <mat-icon>clear_all</mat-icon>
+        Clear filters
+      </button>
+    </section>
+  }
 
   @if (loading()) {
     <div class="example-loading-shade">
@@ -27,10 +46,17 @@
     </div>
   }
 
-  <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z8" multiTemplateDataRows="tableOptions().expandableRows === true">
+  <table
+    mat-table
+    [dataSource]="dataSource"
+    matSort
+    class="mat-elevation-z8"
+    multiTemplateDataRows="tableOptions().expandableRows === true">
     @for (column of columnsToDisplay(); track column) {
       <ng-container matColumnDef="{{ column.name }}">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header disabled="{{ column.sort === false }}">{{ column.label || column.name }}</th>
+        <th mat-header-cell *matHeaderCellDef mat-sort-header disabled="{{ column.sort === false }}">
+          {{ column.label || column.name }}
+        </th>
         <td mat-cell *matCellDef="let element">{{ element[column.name] }}</td>
       </ng-container>
     }
@@ -53,7 +79,9 @@
       </ng-container>
       <ng-container matColumnDef="expandedDetail">
         <td mat-cell *matCellDef="let element" [attr.colspan]="columnNamesToDisplay().length">
-          <div class="example-element-detail-wrapper" [class.example-element-detail-wrapper-expanded]="isExpanded(element)">
+          <div
+            class="example-element-detail-wrapper"
+            [class.example-element-detail-wrapper-expanded]="isExpanded(element)">
             <div class="example-element-detail">
               <div class="example-element-diagram">
                 <div class="example-element-position">{{ element.position }}</div>
@@ -76,7 +104,11 @@
         <th mat-header-cell *matHeaderCellDef aria-label="row actions">&nbsp;</th>
         <td mat-cell *matCellDef="let element; let i = dataIndex">
           @for (action of rowActions(); track action) {
-            <button mat-icon-button color="accent" [disabled]="action.disabled" (click)="onRowActionClicked($event, action, element, i)">
+            <button
+              mat-icon-button
+              color="accent"
+              [disabled]="action.disabled"
+              (click)="onRowActionClicked($event, action, element, i)">
               <mat-icon>{{ action.icon }}</mat-icon>
             </button>
           }
@@ -100,7 +132,9 @@
     <!-- Row shown when there is no matching data. -->
     @if (!loading()) {
       <tr class="example-element-row" *matNoDataRow>
-        <td class="mdc-data-table__cell" style="text-align: center" [attr.colspan]="columnNamesToDisplay().length">No data matching the filter</td>
+        <td class="mdc-data-table__cell" style="text-align: center" [attr.colspan]="columnNamesToDisplay().length">
+          No data matching the filter
+        </td>
       </tr>
     }
   </table>
@@ -109,7 +143,10 @@
     @if (tableOptions().jumpToPage === true) {
       <div class="mat-mdc-paginator-page-size-label">Go to page:</div>
       <mat-form-field appearance="outline" subscriptSizing="dynamic" class="paginator-page-select">
-        <mat-select [value]="paginator?.pageIndex" (selectionChange)="jumpToPage($event.source)" hideSingleSelectionIndicator>
+        <mat-select
+          [value]="paginator?.pageIndex ?? 0"
+          (selectionChange)="jumpToPage($event.source)"
+          hideSingleSelectionIndicator>
           @for (pageNumber of getPageList(); track pageNumber) {
             <mat-option [value]="pageNumber">{{ pageNumber + 1 }}</mat-option>
           }

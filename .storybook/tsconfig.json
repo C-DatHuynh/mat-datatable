@@ -1,11 +1,17 @@
 {
-  "extends": "../tsconfig.app.json",
+  "extends": "../tsconfig.json",
   "compilerOptions": {
     "types": ["node"],
     "allowSyntheticDefaultImports": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "declaration": false,
+    "declarationMap": false
   },
-  "exclude": ["../src/test.ts", "../src/**/*.spec.ts"],
-  "include": ["../src/**/*.stories.*", "./preview.ts"],
+  "exclude": ["../projects/**/*.spec.ts"],
+  "include": [
+    "../projects/material-datatable/src/**/*.stories.*",
+    "../projects/material-datatable/src/**/*.ts",
+    "./preview.ts"
+  ],
   "files": ["./typings.d.ts"]
 }

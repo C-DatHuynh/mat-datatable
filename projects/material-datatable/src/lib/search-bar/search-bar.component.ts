@@ -12,12 +12,29 @@ import { MatInputModule } from '@angular/material/input';
   template: `
     <mat-form-field appearance="outline" class="search-field" subscriptSizing="dynamic">
       <mat-label>Search</mat-label>
-      <input matInput (keyup.enter)="onSearch($event)" [placeholder]="placeholder || 'Search table data...'" #input autocomplete="off" />
-      <button matPrefix mat-icon-button aria-label="Search" (click)="onSearchClick(input)" type="button">
+      <input
+        matInput
+        (keyup.enter)="onSearch($event)"
+        [placeholder]="placeholder || 'Search table data...'"
+        #input
+        autocomplete="off" />
+      <button
+        matPrefix
+        mat-icon-button
+        aria-label="Search"
+        (click)="onSearchClick(input)"
+        type="button"
+        class="search-button">
         <mat-icon>search</mat-icon>
       </button>
       @if (input.value) {
-        <button matSuffix mat-icon-button aria-label="Clear search" (click)="onClear(input)" type="button">
+        <button
+          matSuffix
+          mat-icon-button
+          aria-label="Clear search"
+          (click)="onClear(input)"
+          type="button"
+          class="clear-button">
           <mat-icon>close</mat-icon>
         </button>
       }

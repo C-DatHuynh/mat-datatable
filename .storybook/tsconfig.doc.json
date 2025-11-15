@@ -3,8 +3,8 @@
 {
   "extends": "./tsconfig.json",
   // Exclude all files that are not needed for documentation generation.
-  "exclude": ["../src/test.ts", "../src/**/*.spec.ts", "../src/**/*.stories.ts"],
+  "exclude": ["../projects/**/*.spec.ts", "../projects/**/*.stories.ts"],
   // Please make sure to include all files from which Compodoc should generate documentation.
-  "include": ["../src/**/*"],
+  "include": ["../projects/material-datatable/src/**/*"],
   "files": ["./typings.d.ts"]
 }
