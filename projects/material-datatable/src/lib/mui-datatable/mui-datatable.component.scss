@@ -1,4 +1,4 @@
-.mui-data-table-container {
+.mui-datatable-container {
   position: relative;
 }
 
@@ -98,7 +98,7 @@ tr.example-element-row:not(.example-expanded-row):active {
   justify-content: center;
 }
 
-.example-spacer {
+.spacer {
   flex: 1 1 auto;
 }
 
@@ -108,6 +108,43 @@ tr.example-element-row:not(.example-expanded-row):active {
 
   app-search-bar {
     margin-right: 16px;
+  }
+}
+
+.filter-chips {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  flex-wrap: wrap;
+  background-color: #f5f5f5;
+  border-left: 4px solid #3f51b5;
+  margin: 8px 0;
+
+  .filter-chips-label {
+    font-weight: 500;
+    color: rgba(0, 0, 0, 0.87);
+    font-size: 14px;
+  }
+
+  mat-chip-grid {
+    flex: 1;
+  }
+
+  .clear-filters-btn {
+    margin-left: auto;
+    background-color: #f44336;
+    color: white;
+    border-color: #f44336;
+
+    &:hover {
+      background-color: #d32f2f;
+      border-color: #d32f2f;
+    }
+
+    mat-icon {
+      color: white;
+    }
   }
 }
 

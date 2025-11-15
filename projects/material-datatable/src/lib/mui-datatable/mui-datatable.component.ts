@@ -13,6 +13,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
+import { MatChipsModule } from '@angular/material/chips';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -25,8 +26,10 @@ import { MatTableModule, MatTable, MatTableDataSource } from '@angular/material/
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { FormDialogComponent, ActionDialogComponent, FormDialogData, ActionDialogData, DialogAction } from '../dialog';
 import { Action, ColumnDefinition, RowAction, TableOptions } from '../interfaces';
+import { FilterEntriesPipe } from '../pipes';
 import { SearchBarComponent } from '../search-bar/search-bar.component';
 import { DataStoreService, DataTableService, NotificationService } from '../services';
+import { DataFilters } from '../services/datastore.service';
 import { DataModel } from '../types';
 
 export const SHARE_IMPORTS = [
@@ -43,6 +46,8 @@ export const SHARE_IMPORTS = [
   MatProgressSpinnerModule,
   MatToolbarModule,
   SearchBarComponent,
+  MatChipsModule,
+  FilterEntriesPipe,
 ];
 
 const defaultTableOptions: TableOptions = {
@@ -115,6 +120,7 @@ export abstract class DataTableComponent<TModel extends DataModel> implements Af
   readonly rowActions = computed(() => {
     const allActions: RowAction[] = [];
     const getTrueIndex = (index: number) => {
+      if (!this.paginator) return index;
       const { pageIndex } = this.paginator;
       return pageIndex > 0 ? pageIndex * this.paginator.pageSize + index : index;
     };
@@ -140,9 +146,10 @@ export abstract class DataTableComponent<TModel extends DataModel> implements Af
   private readonly destroyRef = inject(DestroyRef);
   error = signal<string | null>(null).asReadonly();
   loading = signal<boolean>(false).asReadonly();
+  filters = signal<DataFilters>({ search: null, filter: null }).asReadonly();
 
   @ViewChild(MatSort) sort!: MatSort;
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
+  @ViewChild(MatPaginator) paginator?: MatPaginator;
   @ViewChild(MatTable) table!: MatTable<TModel>;
 
   dataSource = new MatTableDataSource<TModel>([]);
@@ -172,11 +179,11 @@ export abstract class DataTableComponent<TModel extends DataModel> implements Af
     if (!this.tableOptions().remote) {
       this.loadInitialData();
       this.dataSource.sort = this.sort;
-      this.dataSource.paginator = this.paginator;
+      this.dataSource.paginator = this.paginator || null;
     }
 
     // Subscribe to pagination & sorting changes
-    this.paginator.page.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(pageEvent => {
+    this.paginator?.page.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(pageEvent => {
       this.dataStoreService.setPagination({
         page: pageEvent.pageIndex,
         pageSize: pageEvent.pageSize,
@@ -185,7 +192,7 @@ export abstract class DataTableComponent<TModel extends DataModel> implements Af
       });
     });
     this.sort.sortChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-      this.paginator.firstPage();
+      this.paginator?.firstPage();
       this.dataStoreService.setSorting({
         column: this.sort.active,
         direction: this.sort.direction as 'asc' | 'desc',
@@ -211,6 +218,9 @@ export abstract class DataTableComponent<TModel extends DataModel> implements Af
 
     // Subscribe to error
     this.error = this.dataStoreService.error;
+
+    // Subscribe to filters
+    this.filters = this.dataStoreService.filters;
   }
 
   private updateTableData(data: TModel[]): void {
@@ -241,7 +251,7 @@ export abstract class DataTableComponent<TModel extends DataModel> implements Af
 
   jumpToPage(event: MatSelect) {
     const value = parseInt(event.value, 10);
-    if (!isNaN(value)) {
+    if (!isNaN(value) && this.paginator) {
       this.paginator.pageIndex = value;
       this.paginator._changePageSize(this.paginator.pageSize);
     }
@@ -373,6 +383,16 @@ export abstract class DataTableComponent<TModel extends DataModel> implements Af
     if (this.dataSource.paginator) {
       this.dataSource.paginator.firstPage();
     }
+  }
+
+  removeFilterEntry(entry: [string, any]): void {
+    const currentFilters = this.dataStoreService.filters().filter || {};
+    const { [entry[0]]: _, ...updatedFilters } = currentFilters;
+    this.changeFilter(updatedFilters);
+  }
+
+  clearFilterEntries(): void {
+    this.changeFilter({});
   }
   //#endregion
 

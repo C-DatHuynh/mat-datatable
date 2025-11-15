@@ -16,3 +16,11 @@ export class CastPipe implements PipeTransform {
     return input as T;
   }
 }
+
+@Pipe({ name: 'filterEntries', pure: true, standalone: true })
+export class FilterEntriesPipe implements PipeTransform {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  transform(input: object): [string, any][] {
+    return Object.entries(input).filter(([_, value]) => value !== undefined && value !== null && value !== '');
+  }
+}

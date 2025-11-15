@@ -24,7 +24,7 @@ import { FormRendererComponent } from './formio/form-renderer.component';
 import { BasicDataTableComponent } from './mui-datatable/basic-datatable.component';
 import { RemoteDataTableComponent } from './mui-datatable/remote-datatable.component';
 // Import pipes
-import { CastPipe } from './pipes';
+import { CastPipe, FilterEntriesPipe } from './pipes';
 import { SearchBarComponent } from './search-bar/search-bar.component';
 
 @NgModule({
@@ -57,6 +57,7 @@ import { SearchBarComponent } from './search-bar/search-bar.component';
     BaseDialogComponent,
     FormRendererComponent,
     CastPipe,
+    FilterEntriesPipe,
   ],
   exports: [
     // Standalone components - these are imported and re-exported
@@ -69,6 +70,7 @@ import { SearchBarComponent } from './search-bar/search-bar.component';
     FormRendererComponent,
     // Traditional Angular pipe
     CastPipe,
+    FilterEntriesPipe,
   ],
 })
 export class MaterialDatatableModule {}
