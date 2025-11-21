@@ -56,10 +56,6 @@ tr.detail-row {
 tr.element-row {
   cursor: pointer;
 
-  &.cdk-drag {
-    cursor: move;
-  }
-
   &.cdk-drag-preview {
     box-shadow:
       0 5px 5px -3px rgba(0, 0, 0, 0.2),
@@ -67,6 +63,7 @@ tr.element-row {
       0 3px 14px 2px rgba(0, 0, 0, 0.12);
     opacity: 0.9;
     background: white;
+    cursor: move;
   }
 
   &.cdk-drag-placeholder {
