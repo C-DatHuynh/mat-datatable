@@ -9,9 +9,12 @@ import {
   computed,
   effect,
   signal,
-  output,
   DestroyRef,
   Directive,
+  ViewContainerRef,
+  ComponentRef,
+  createComponent,
+  EnvironmentInjector,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
@@ -157,7 +160,9 @@ export abstract class DataTableComponent<TModel extends DataModel> implements Af
   @ViewChild(MatTable) table!: MatTable<TModel>;
 
   dataSource = new MatTableDataSource<TModel>([]);
-  expandedElement!: TModel | null;
+  expandedElement = signal<TModel | null>(null);
+  expandedComponentRef?: ComponentRef<any>;
+  protected environmentInjector = inject(EnvironmentInjector);
 
   constructor(
     protected readonly dataTableService: DataTableService<TModel>,
@@ -238,15 +243,61 @@ export abstract class DataTableComponent<TModel extends DataModel> implements Af
   //#region Feature: Expandable Rows
 
   isExpanded(element: TModel) {
-    return this.expandedElement === element;
+    return this.expandedElement() === element;
   }
 
   toggleExpand(element: TModel) {
-    this.expandedElement = this.isExpanded(element) ? null : element;
+    const newExpandedElement = this.isExpanded(element) ? null : element;
+    this.expandedElement.set(newExpandedElement);
   }
 
   toggle(element: TModel): void {
     this.toggleExpand(element);
+  }
+
+  getExpandedComponentInputs(element: TModel): Record<string, any> {
+    const inputs: Record<string, any> = {
+      data: element,
+    };
+
+    // Merge additional inputs if provided
+    const additionalInputs = this.tableOptions().expandableRowComponentInputs;
+    if (additionalInputs) {
+      Object.assign(inputs, additionalInputs);
+    }
+
+    return inputs;
+  }
+
+  createExpandedComponent(container: ViewContainerRef, element: TModel): void {
+    const componentType = this.tableOptions().expandableRowComponent;
+    if (!componentType) return;
+
+    // Clear any existing component
+    container.clear();
+    if (this.expandedComponentRef) {
+      this.expandedComponentRef.destroy();
+    }
+
+    // Create the component
+    this.expandedComponentRef = createComponent(componentType, {
+      environmentInjector: this.environmentInjector,
+      hostElement: container.element.nativeElement,
+    });
+
+    // Set the row data as input
+    this.expandedComponentRef.setInput('data', element);
+
+    // Set additional inputs if provided
+    const additionalInputs = this.tableOptions().expandableRowComponentInputs;
+    if (additionalInputs) {
+      Object.entries(additionalInputs).forEach(([key, value]) => {
+        this.expandedComponentRef!.setInput(key, value);
+      });
+    }
+
+    // Attach the component to the container
+    container.insert(this.expandedComponentRef.hostView);
   }
 
   //#endregion

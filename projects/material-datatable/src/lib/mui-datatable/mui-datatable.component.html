@@ -99,18 +99,17 @@
             <div
               class="example-element-detail-wrapper"
               [class.example-element-detail-wrapper-expanded]="isExpanded(element)">
-              <div class="example-element-detail">
-                <div class="example-element-diagram">
-                  <div class="example-element-position">{{ element.position }}</div>
-                  <div class="example-element-symbol">{{ element.symbol }}</div>
-                  <div class="example-element-name">{{ element.name }}</div>
-                  <div class="example-element-weight">{{ element.weight }}</div>
+              @if (tableOptions().expandableRowComponent && isExpanded(element)) {
+                <!-- Custom component with row data injected -->
+                <div class="example-element-detail custom-component-container">
+                  <ng-container
+                    *ngComponentOutlet="
+                      tableOptions().expandableRowComponent!;
+                      inputs: getExpandedComponentInputs(element)
+                    ">
+                  </ng-container>
                 </div>
-                <div class="example-element-description">
-                  {{ element.description }}
-                  <span class="example-element-description-attribution"> -- Wikipedia </span>
-                </div>
-              </div>
+              }
             </div>
           </td>
         </ng-container>

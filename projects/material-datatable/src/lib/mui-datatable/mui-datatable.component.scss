@@ -97,6 +97,12 @@ table.reorderable {
   min-height: 0;
 }
 
+.custom-component-container {
+  width: 100%;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
 .example-element-diagram {
   min-width: 80px;
   border: 2px solid black;

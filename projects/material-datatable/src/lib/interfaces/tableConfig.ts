@@ -1,3 +1,4 @@
+import { Type } from '@angular/core';
 import { Action, RowAction } from './action';
 
 export interface TableOptions {
@@ -9,6 +10,8 @@ export interface TableOptions {
   jumpToPage?: boolean;
   selectableRows?: 'none' | 'single' | 'multiple';
   expandableRows?: boolean; // Allow row expansion
+  expandableRowComponent?: Type<any>; // Custom component to render in expanded row
+  expandableRowComponentInputs?: Record<string, any>; // Additional inputs for the custom component
   //selectableRowsHeader?: boolean; // Show checkbox in header
   //selectableRowsOnClick?: boolean; // Allow row selection on click
   canSearch?: boolean; // Enable search functionality

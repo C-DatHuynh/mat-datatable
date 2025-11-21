@@ -1,8 +1,33 @@
 // basic-datatable.component.stories.ts
+import { CommonModule } from '@angular/common';
+import { Component, Input } from '@angular/core';
+import { MatCardModule } from '@angular/material/card';
 import { type Meta, type StoryObj } from '@storybook/angular';
 import { ColumnDefinition, TableOptions } from '../interfaces';
 import { ELEMENT_DATA, PeriodicElement } from '../stories/fixture';
 import { BasicDataTableComponent } from './basic-datatable.component';
+
+// Simple inline component for demonstration
+@Component({
+  selector: 'app-simple-detail',
+  standalone: true,
+  imports: [CommonModule, MatCardModule],
+  template: `
+    <mat-card style="margin: 8px;">
+      <mat-card-header>
+        <mat-card-title>{{ data.name }} ({{ data.symbol }})</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <p><strong>Position:</strong> {{ data.position }}</p>
+        <p><strong>Weight:</strong> {{ data.weight }}</p>
+        <p>{{ data.description }}</p>
+      </mat-card-content>
+    </mat-card>
+  `,
+})
+class SimpleDetailComponent {
+  @Input() data!: PeriodicElement;
+}
 
 const meta: Meta<BasicDataTableComponent<PeriodicElement>> = {
   title: 'Components/Basic MUI Datatable',
@@ -57,6 +82,23 @@ export const WithReordering: Story = {
     options: {
       ...tableOptions,
       reorder: true,
+    },
+    columns: columns,
+    onAddItem: (item: PeriodicElement) => alert(`Add item: ${JSON.stringify(item)}`),
+    onUpdateItem: (item: PeriodicElement) => alert(`Update item: ${JSON.stringify(item)}`),
+    onDeleteItem: (item: PeriodicElement) => alert(`Delete item with id: ${item.id}`),
+    onFilterChange: (filter: any) => alert(`Filter changed: ${JSON.stringify(filter)}`),
+  },
+};
+
+export const WithCustomExpandableComponent: Story = {
+  args: {
+    title: 'Datatable with Custom Expandable Component',
+    data: ELEMENT_DATA.slice(0, 5),
+    options: {
+      ...tableOptions,
+      expandableRows: true,
+      expandableRowComponent: SimpleDetailComponent,
     },
     columns: columns,
     onAddItem: (item: PeriodicElement) => alert(`Add item: ${JSON.stringify(item)}`),
