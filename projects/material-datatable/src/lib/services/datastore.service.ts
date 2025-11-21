@@ -223,11 +223,11 @@ export class DataStoreService<T extends DataModel> {
     return columns
       .filter(column => isNonEmpty(filter[column.name as keyof typeof filter]))
       .every(column => {
-        const { name, filterOptions } = column;
+        const { name, filterLogic } = column;
         const filterValue = filter[name as keyof typeof filter] as any;
         const itemValue = data[name as keyof T];
-        if (filterOptions?.logic) {
-          return filterOptions.logic(itemValue, filterValue, data);
+        if (filterLogic) {
+          return filterLogic(itemValue, filterValue, data);
         }
         return itemValue === filterValue || (Array.isArray(filterValue) && filterValue.includes(itemValue));
       });

@@ -14,6 +14,7 @@ export interface ColumnDefinition {
   label?: string;
   display?: boolean;
   filter?: boolean;
+  filterLogic?: FilterLogic;
   filterOptions?: {
     logic?: FilterLogic; // Custom logic for filtering
     formioOptions?: object;
