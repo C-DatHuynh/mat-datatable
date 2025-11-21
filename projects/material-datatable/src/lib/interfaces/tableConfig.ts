@@ -1,4 +1,5 @@
 import { Type } from '@angular/core';
+import { ExtendedComponentSchema } from '@formio/angular';
 import { Action, RowAction } from './action';
 
 export interface TableOptions {
@@ -14,6 +15,8 @@ export interface TableOptions {
   expandableRowComponentInputs?: Record<string, any>; // Additional inputs for the custom component
   //selectableRowsHeader?: boolean; // Show checkbox in header
   //selectableRowsOnClick?: boolean; // Allow row selection on click
+  filterForm?: ExtendedComponentSchema[];
+  editForm?: ExtendedComponentSchema[];
   canSearch?: boolean; // Enable search functionality
   searchPlaceholder?: string;
   canAdd?: boolean; // Show Add button

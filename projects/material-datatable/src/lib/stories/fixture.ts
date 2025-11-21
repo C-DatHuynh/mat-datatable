@@ -107,3 +107,101 @@ export const ELEMENT_DATA: PeriodicElement[] = [
         two-thirds the density of air.`,
   },
 ];
+
+// Form Definitions
+
+/**
+ * Valid Filter Form - includes all filterable columns (name, position, weight, symbol)
+ */
+export const VALID_FILTER_FORM = [
+  {
+    key: 'name',
+    type: 'textfield',
+    label: 'Filter by Name',
+    input: true,
+    placeholder: 'Enter element name',
+  },
+  {
+    key: 'position',
+    type: 'number',
+    label: 'Filter by Position',
+    input: true,
+  },
+  {
+    key: 'weight',
+    type: 'number',
+    label: 'Filter by Weight',
+    input: true,
+  },
+  {
+    key: 'symbol',
+    type: 'textfield',
+    label: 'Filter by Symbol',
+    input: true,
+  },
+];
+
+/**
+ * Valid Edit Form - includes all editable columns with validation rules
+ */
+export const VALID_EDIT_FORM = [
+  {
+    key: 'name',
+    type: 'textfield',
+    label: 'Element Name',
+    input: true,
+    validate: { required: true },
+  },
+  {
+    key: 'position',
+    type: 'number',
+    label: 'Position',
+    input: true,
+    validate: { required: true, min: 1 },
+  },
+  {
+    key: 'weight',
+    type: 'number',
+    label: 'Atomic Weight',
+    input: true,
+    validate: { required: true },
+  },
+  {
+    key: 'symbol',
+    type: 'textfield',
+    label: 'Symbol',
+    input: true,
+    validate: { required: true, maxLength: 3 },
+  },
+  {
+    key: 'description',
+    type: 'textfield',
+    label: 'Description',
+    input: true,
+  },
+];
+
+/**
+ * Invalid Filter Form - missing 'weight' column
+ */
+export const INVALID_FILTER_FORM_MISSING_WEIGHT = [
+  {
+    key: 'name',
+    type: 'textfield',
+    label: 'Name',
+    input: true,
+  },
+  {
+    key: 'position',
+    type: 'number',
+    label: 'Position',
+    input: true,
+  },
+  {
+    key: 'symbol',
+    type: 'textfield',
+    label: 'Symbol',
+    input: true,
+  },
+  // Missing 'weight' column
+];

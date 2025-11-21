@@ -11,11 +11,38 @@ export const isNonEmpty = (value: any): boolean => {
   return value !== '';
 };
 
-export const splitArrayIntoChunks = (arr: any[], n: number) => {
-  const result: any[] = [];
-  for (let i = 0; i < arr.length; i += n) {
-    const chunk = arr.slice(i, i + n);
-    result.push(chunk);
+export const findAllValuesByKey = (root: object, targetKey: string) => {
+  const results = [];
+  const stack = [root];
+  const visited = new WeakSet(); // avoid re-walking same object (and handle cycles)
+
+  while (stack.length > 0) {
+    const node = stack.pop();
+
+    // Only objects (including arrays) can contain keys
+    if (node && typeof node === 'object') {
+      // Skip if we've already processed this object (optimization + safety)
+      if (visited.has(node)) continue;
+      visited.add(node);
+
+      if (Array.isArray(node)) {
+        // Push array elements to stack
+        for (let i = 0; i < node.length; i++) {
+          stack.push(node[i]);
+        }
+      } else {
+        // Plain object
+        for (const [key, value] of Object.entries(node)) {
+          if (key === targetKey) {
+            results.push(value);
+          }
+          // Only descend into nested objects/arrays
+          if (value && typeof value === 'object') {
+            stack.push(value);
+          }
+        }
+      }
+    }
   }
-  return result;
+  return results;
 };

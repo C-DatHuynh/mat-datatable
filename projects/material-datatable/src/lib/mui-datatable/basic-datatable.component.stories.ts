@@ -4,7 +4,13 @@ import { Component, Input } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { type Meta, type StoryObj } from '@storybook/angular';
 import { ColumnDefinition, TableOptions } from '../interfaces';
-import { ELEMENT_DATA, PeriodicElement } from '../stories/fixture';
+import {
+  ELEMENT_DATA,
+  INVALID_FILTER_FORM_MISSING_WEIGHT,
+  PeriodicElement,
+  VALID_EDIT_FORM,
+  VALID_FILTER_FORM,
+} from '../stories/fixture';
 import { BasicDataTableComponent } from './basic-datatable.component';
 
 // Simple inline component for demonstration
@@ -58,7 +64,7 @@ const columns: ColumnDefinition[] = [
     filter: true,
     sort: false,
   },
-  { name: 'description', label: 'Description', display: false, filter: false, sort: false },
+  { name: 'description', label: 'Description', display: false, filter: false, sort: false, editable: true },
 ];
 
 export const ExternalData: Story = {
@@ -104,5 +110,46 @@ export const WithCustomExpandableComponent: Story = {
     onUpdateItem: (item: PeriodicElement) => alert(`Update item: ${JSON.stringify(item)}`),
     onDeleteItem: (item: PeriodicElement) => alert(`Delete item with id: ${item.id}`),
     onFilterChange: (filter: any) => alert(`Filter changed: ${JSON.stringify(filter)}`),
+  },
+};
+
+export const ValidFormsInput: Story = {
+  args: {
+    title: 'Valid Custom Forms Configuration',
+    data: ELEMENT_DATA.slice(0, 5),
+    options: {
+      ...tableOptions,
+      canFilter: true,
+      canEdit: true,
+      canAdd: true,
+      filterForm: VALID_FILTER_FORM,
+      editForm: VALID_EDIT_FORM,
+    },
+    columns: columns,
+    onAddItem: (item: PeriodicElement) => console.log('Add:', item),
+    onUpdateItem: (item: PeriodicElement) => console.log('Update:', item),
+    onDeleteItem: (item: PeriodicElement) => console.log('Delete:', item.id),
+    onFilterChange: (filter: any) => console.log('Filter:', filter),
+  },
+};
+
+export const InvalidFilterFormMissingColumn: Story = {
+  args: {
+    title: 'Invalid Filter Form - Missing Column',
+    data: ELEMENT_DATA.slice(0, 5),
+    options: {
+      ...tableOptions,
+      canFilter: true,
+      filterForm: INVALID_FILTER_FORM_MISSING_WEIGHT,
+    },
+    columns: columns,
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'This story demonstrates an invalid configuration where the filterForm is missing the "weight" column. The component will display an error message instead of rendering the table.',
+      },
+    },
   },
 };

@@ -29,6 +29,7 @@ import { MatSelectModule, MatSelect } from '@angular/material/select';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableModule, MatTable, MatTableDataSource } from '@angular/material/table';
 import { MatToolbarModule } from '@angular/material/toolbar';
+import { ExtendedComponentSchema } from '@formio/angular';
 import { FormDialogComponent, ActionDialogComponent, FormDialogData, ActionDialogData, DialogAction } from '../dialog';
 import { Action, ColumnDefinition, RowAction, TableOptions } from '../interfaces';
 import { FilterEntriesPipe } from '../pipes';
@@ -81,6 +82,8 @@ export abstract class DataTableComponent<TModel extends DataModel> implements Af
   readonly columns = input.required<ColumnDefinition[]>();
   readonly options = input.required<TableOptions>();
   readonly tableOptions = computed(() => ({
+    filterForm: this.dataTableService.createDefaultFormInput(this.columns().filter(col => col.filter !== false)),
+    editForm: this.dataTableService.createDefaultFormInput(this.columns().filter(col => col.editable !== false)),
     ...defaultTableOptions,
     ...this.options(),
   }));
@@ -152,6 +155,7 @@ export abstract class DataTableComponent<TModel extends DataModel> implements Af
 
   private readonly destroyRef = inject(DestroyRef);
   error = signal<string | null>(null).asReadonly();
+  componentError: string | null = null;
   loading = signal<boolean>(false).asReadonly();
   filters = signal<DataFilters>({ search: null, filter: null }).asReadonly();
 
@@ -179,6 +183,22 @@ export abstract class DataTableComponent<TModel extends DataModel> implements Af
 
   //#region State management
   private initializeComponent(): void {
+    try {
+      const filterableColumns = this.columns().filter(col => col.filter !== false);
+      this.dataTableService.validateFormInput(filterableColumns, this.tableOptions().filterForm);
+    } catch (error: any) {
+      this.componentError = `Error with FilterForm input: ${error.message}`;
+      return;
+    }
+
+    try {
+      const editableColumns = this.columns().filter(col => col.editable !== false);
+      this.dataTableService.validateFormInput(editableColumns, this.tableOptions().editForm);
+    } catch (error: any) {
+      this.componentError = `Error with EditForm input: ${error.message}`;
+      return;
+    }
+
     // Set the DataStoreService settings for filtering
     this.dataStoreService.setSettings({
       columns: this.columns(),
@@ -330,8 +350,8 @@ export abstract class DataTableComponent<TModel extends DataModel> implements Af
   abstract deleteItem(item: TModel): void;
 
   openFilterDialog(): void {
-    const { filter = {} } = this.dataStoreService.filters();
-    const formComponents = this.dataTableService.buildFormComponents('filter');
+    const { filter } = this.dataStoreService.filters();
+    const formComponents = this.dataStoreService.settings()?.table.filterForm;
 
     this.openFormDialog({
       formComponents,
@@ -343,7 +363,7 @@ export abstract class DataTableComponent<TModel extends DataModel> implements Af
   }
 
   openAddEditDialog(item?: TModel): void {
-    const formComponents = this.dataTableService.buildFormComponents('edit');
+    const formComponents = this.dataStoreService.settings()?.table.editForm;
     const isEdit = !!item;
 
     this.openFormDialog({
@@ -352,12 +372,10 @@ export abstract class DataTableComponent<TModel extends DataModel> implements Af
       title: isEdit ? `Edit ${item.name}` : 'Add item',
       actionLabel: isEdit ? 'Save' : 'Add',
       onResult: ({ action, data }) => {
-        console.log('Dialog result action:', action, data, isEdit);
         if (action.type !== 'ok') {
           return;
         }
         if (isEdit && data.id) {
-          console.log(action, data, isEdit);
           this.updateItem(data);
         } else if (!isEdit) {
           this.addItem(data);
@@ -375,7 +393,7 @@ export abstract class DataTableComponent<TModel extends DataModel> implements Af
   }
 
   private openFormDialog(config: {
-    formComponents: any[];
+    formComponents: ExtendedComponentSchema[] | undefined;
     formValue: any;
     title: string;
     actionLabel: string;
