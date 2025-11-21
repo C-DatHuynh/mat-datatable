@@ -57,7 +57,6 @@ const columns: ColumnDefinition[] = [
     display: true,
     filter: true,
     sort: false,
-    filterOptions: {},
   },
   { name: 'description', label: 'Description', display: false, filter: false, sort: false },
 ];
