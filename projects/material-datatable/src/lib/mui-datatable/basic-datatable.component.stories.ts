@@ -49,3 +49,19 @@ export const ExternalData: Story = {
     onFilterChange: (filter: any) => alert(`Filter changed: ${JSON.stringify(filter)}`),
   },
 };
+
+export const WithReordering: Story = {
+  args: {
+    title: 'Datatable with Row Reordering',
+    data: ELEMENT_DATA,
+    options: {
+      ...tableOptions,
+      reorder: true,
+    },
+    columns: columns,
+    onAddItem: (item: PeriodicElement) => alert(`Add item: ${JSON.stringify(item)}`),
+    onUpdateItem: (item: PeriodicElement) => alert(`Update item: ${JSON.stringify(item)}`),
+    onDeleteItem: (item: PeriodicElement) => alert(`Delete item with id: ${item.id}`),
+    onFilterChange: (filter: any) => alert(`Filter changed: ${JSON.stringify(filter)}`),
+  },
+};

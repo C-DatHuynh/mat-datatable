@@ -1,4 +1,5 @@
 // mui-datatable.component.ts
+import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
 import {
   ViewChild,
@@ -8,6 +9,7 @@ import {
   computed,
   effect,
   signal,
+  output,
   DestroyRef,
   Directive,
 } from '@angular/core';
@@ -48,6 +50,7 @@ export const SHARE_IMPORTS = [
   SearchBarComponent,
   MatChipsModule,
   FilterEntriesPipe,
+  DragDropModule,
 ];
 
 const defaultTableOptions: TableOptions = {
@@ -80,6 +83,7 @@ export abstract class DataTableComponent<TModel extends DataModel> implements Af
   }));
   readonly columnsToDisplay = computed(() => this.columns().filter(col => col.display !== false));
   readonly columnNamesToDisplay = computed(() => [
+    ...(this.tableOptions().reorder === true ? ['dragHandle'] : []),
     ...(this.tableOptions().expandableRows === true ? ['expand'] : []),
     ...this.columnsToDisplay().map(col => col.name),
     ...(this.rowActions().length > 0 ? ['rowActions'] : []),
@@ -393,6 +397,21 @@ export abstract class DataTableComponent<TModel extends DataModel> implements Af
 
   clearFilterEntries(): void {
     this.changeFilter({});
+  }
+  //#endregion
+
+  //#region Feature: Row Reordering
+  dropTable(event: CdkDragDrop<TModel[]>) {
+    if (this.tableOptions().reorder !== true) return;
+
+    const data = [...this.dataSource.data];
+    moveItemInArray(data, event.previousIndex, event.currentIndex);
+    this.dataSource.data = data;
+
+    // Update the data store if not in remote mode
+    if (!this.tableOptions().remote) {
+      this.dataStoreService.setData(data);
+    }
   }
   //#endregion
 

@@ -19,4 +19,5 @@ export interface TableOptions {
   canEdit?: boolean; // Show Edit button
   canDelete?: boolean; // Show Delete button
   canFilter?: boolean; // Show Filter button
+  reorder?: boolean; // Enable drag & drop row reordering
 }
