@@ -60,7 +60,7 @@ const defaultTableOptions: TableOptions = {
   remote: false,
   searchPlaceholder: 'Type to filter...',
   rowsPerPageOptions: [5, 10, 25],
-  expandableRows: true,
+  expandableRows: false,
   customActions: [],
   customRowActions: [],
   rowsPerPage: 5,
