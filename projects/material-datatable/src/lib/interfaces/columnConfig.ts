@@ -14,13 +14,7 @@ export interface ColumnDefinition {
   label?: string;
   display?: boolean;
   filter?: boolean;
-  filterOptions?: {
-    logic?: FilterLogic; // Custom logic for filtering
-    formioOptions?: object;
-  };
+  filterLogic?: FilterLogic;
   editable?: boolean;
-  editOptions?: {
-    formioOptions?: object;
-  };
   sort?: boolean;
 }

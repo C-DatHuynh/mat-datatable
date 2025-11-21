@@ -1,16 +1,16 @@
 import { ChangeDetectionStrategy, Component, Inject, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { ExtendedComponentSchema, FormioForm } from '@formio/angular';
 import { FormRendererComponent, FormSubmissionData } from '../formio';
 import { PrimitiveType } from '../types';
-import { splitArrayIntoChunks } from '../utils';
 import { BaseDialogComponent, DialogAction, DialogOptions } from './base-dialog.component';
 
 export type FormValueType = Record<string, PrimitiveType | PrimitiveType[] | File | File[]>;
 
 export interface FormDialogData {
   title: string;
-  formValue: any;
-  formComponents: object[];
+  formValue: Record<string, any>;
+  formComponents: ExtendedComponentSchema[];
   columns: number;
   actions: DialogAction[];
   showCloseButton?: boolean;
@@ -32,9 +32,9 @@ export interface FormDialogData {
   standalone: true,
 })
 export class FormDialogComponent {
-  formOptions!: any;
+  formOptions!: FormioForm;
   dialogOptions!: DialogOptions;
-  formValue!: any;
+  formValue!: { data: Record<string, any> };
   columns!: number;
 
   @ViewChild(FormRendererComponent) dialogForm!: FormRendererComponent;
@@ -44,7 +44,7 @@ export class FormDialogComponent {
     @Inject(MAT_DIALOG_DATA) readonly data: FormDialogData
   ) {
     this.columns = this.data.columns;
-    this.formOptions = { type: 'form', components: this.setLayout(this.data.formComponents, this.columns) };
+    this.formOptions = { type: 'form', components: this.data.formComponents };
     this.formValue = { data: this.data.formValue || {} };
     this.dialogOptions = { title: this.data.title, actions: this.data.actions, showCloseButton: true };
   }
@@ -60,15 +60,5 @@ export class FormDialogComponent {
 
   onSubmit(data: FormSubmissionData): void {
     this.dialogRef.close({ action: { type: 'ok' }, data: data.data });
-  }
-
-  setLayout(components: object[], columns: number = 2) {
-    const chunks = splitArrayIntoChunks(components, columns);
-    return [
-      {
-        type: 'columns',
-        columns: chunks.map(chunk => ({ width: 12 / chunk.length, components: chunk })),
-      },
-    ];
   }
 }

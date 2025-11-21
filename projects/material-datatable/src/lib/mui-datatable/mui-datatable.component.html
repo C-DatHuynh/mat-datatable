@@ -4,160 +4,190 @@
   <div class="mui-datatable-title">
     <h2>{{ title() }}</h2>
   </div>
-  <mat-toolbar class="mui-datatable-toolbar">
-    @if (tableOptions().canSearch !== false) {
-      <app-search-bar
-        [placeholder]="tableOptions().searchPlaceholder || 'Search table data...'"
-        (search)="applySearch($event)"
-        (clear)="onSearchClear()">
-      </app-search-bar>
-    }
-    <span class="spacer"></span>
-    @for (action of actions(); track action) {
-      <button mat-raised-button color="primary" [disabled]="action.disabled" (click)="action.onClick()">
-        <mat-icon>{{ action.icon }}</mat-icon>
-        {{ action.label }}
-      </button>
-    }
-  </mat-toolbar>
-  @if ((filters().filter || {} | filterEntries).length > 0) {
-    <section class="filter-chips">
-      <span class="filter-chips-label">Applied filters:</span>
-      <mat-chip-grid>
-        @for (keyword of filters().filter || {} | filterEntries; track keyword) {
-          <mat-chip-row (removed)="removeFilterEntry(keyword)">
-            {{ keyword[0] }}={{ keyword[1] }}
-            <button matChipRemove [attr.aria-label]="'remove template form' + keyword">
-              <mat-icon>cancel</mat-icon>
-            </button>
-          </mat-chip-row>
-        }
-      </mat-chip-grid>
-      <button mat-stroked-button (click)="clearFilterEntries()" class="clear-filters-btn">
-        <mat-icon>clear_all</mat-icon>
-        Clear filters
-      </button>
-    </section>
-  }
 
-  @if (loading()) {
-    <div class="example-loading-shade">
-      <mat-spinner></mat-spinner>
+  <!-- Configuration Error Display -->
+  @if (componentError) {
+    <div class="error-container">
+      <mat-icon class="error-icon">error</mat-icon>
+      <div class="error-content">
+        <h3>Configuration Error</h3>
+        <p>{{ componentError }}</p>
+      </div>
+    </div>
+  } @else {
+    <mat-toolbar class="mui-datatable-toolbar">
+      @if (tableOptions().canSearch !== false) {
+        <app-search-bar
+          [placeholder]="tableOptions().searchPlaceholder || 'Search table data...'"
+          (search)="applySearch($event)"
+          (clear)="onSearchClear()">
+        </app-search-bar>
+      }
+      <span class="spacer"></span>
+      @for (action of actions(); track action) {
+        <button mat-raised-button color="primary" [disabled]="action.disabled" (click)="action.onClick()">
+          <mat-icon>{{ action.icon }}</mat-icon>
+          {{ action.label }}
+        </button>
+      }
+    </mat-toolbar>
+    @if ((filters().filter || {} | filterEntries).length > 0) {
+      <section class="filter-chips">
+        <span class="filter-chips-label">Applied filters:</span>
+        <mat-chip-grid>
+          @for (keyword of filters().filter || {} | filterEntries; track keyword) {
+            <mat-chip-row (removed)="removeFilterEntry(keyword)">
+              {{ keyword[0] }}={{ keyword[1] }}
+              <button matChipRemove [attr.aria-label]="'remove template form' + keyword">
+                <mat-icon>cancel</mat-icon>
+              </button>
+            </mat-chip-row>
+          }
+        </mat-chip-grid>
+        <button mat-stroked-button (click)="clearFilterEntries()" class="clear-filters-btn">
+          <mat-icon>clear_all</mat-icon>
+          Clear filters
+        </button>
+      </section>
+    }
+
+    @if (loading()) {
+      <div class="loading-shade">
+        <mat-spinner></mat-spinner>
+      </div>
+    }
+
+    <div
+      cdkDropList
+      [cdkDropListData]="dataSource.data"
+      [cdkDropListDisabled]="tableOptions().reorder !== true"
+      (cdkDropListDropped)="dropTable($event)"
+      class="table-container">
+      <table
+        mat-table
+        [dataSource]="dataSource"
+        matSort
+        class="mat-elevation-z8"
+        [class.reorderable]="tableOptions().reorder === true"
+        multiTemplateDataRows="tableOptions().expandableRows === true">
+        @for (column of columnsToDisplay(); track column) {
+          <ng-container matColumnDef="{{ column.name }}">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header disabled="{{ column.sort === false }}">
+              {{ column.label || column.name }}
+            </th>
+            <td mat-cell *matCellDef="let element">{{ element[column.name] }}</td>
+          </ng-container>
+        }
+
+        <!-- Drag Handle Column -->
+        @if (tableOptions().reorder === true) {
+          <ng-container matColumnDef="dragHandle">
+            <th mat-header-cell *matHeaderCellDef aria-label="reorder">&nbsp;</th>
+            <td mat-cell *matCellDef="let element" class="drag-handle-cell">
+              <mat-icon class="drag-handle" cdkDragHandle>drag_indicator</mat-icon>
+            </td>
+          </ng-container>
+        }
+
+        <!-- Expanded Content Column - The detail row is made up of this one column that spans across all columns -->
+        @if (tableOptions().expandableRows === true) {
+          <ng-container matColumnDef="expand">
+            <th mat-header-cell *matHeaderCellDef aria-label="row actions">&nbsp;</th>
+            <td mat-cell *matCellDef="let element">
+              <button
+                mat-icon-button
+                color="primary"
+                aria-label="expand row"
+                (click)="toggle(element); $event.stopPropagation()"
+                class="toggle-button"
+                [class.toggle-button-expanded]="isExpanded(element)">
+                <mat-icon>keyboard_arrow_down</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="expandedDetail">
+            <td mat-cell *matCellDef="let element" [attr.colspan]="columnNamesToDisplay().length">
+              <div class="element-detail-wrapper" [class.element-detail-wrapper-expanded]="isExpanded(element)">
+                @if (tableOptions().expandableRowComponent && isExpanded(element)) {
+                  <!-- Custom component with row data injected -->
+                  <div class="element-detail custom-component-container">
+                    <ng-container
+                      *ngComponentOutlet="
+                        tableOptions().expandableRowComponent!;
+                        inputs: getExpandedComponentInputs(element)
+                      ">
+                    </ng-container>
+                  </div>
+                }
+              </div>
+            </td>
+          </ng-container>
+        }
+
+        @if (rowActions().length > 0) {
+          <ng-container matColumnDef="rowActions">
+            <th mat-header-cell *matHeaderCellDef aria-label="row actions">&nbsp;</th>
+            <td mat-cell *matCellDef="let element; let i = dataIndex">
+              @for (action of rowActions(); track action) {
+                <button
+                  mat-icon-button
+                  color="accent"
+                  [disabled]="action.disabled"
+                  (click)="onRowActionClicked($event, action, element, i)">
+                  <mat-icon>{{ action.icon }}</mat-icon>
+                </button>
+              }
+            </td>
+          </ng-container>
+        }
+
+        <tr mat-header-row *matHeaderRowDef="columnNamesToDisplay()"></tr>
+        <tr
+          mat-row
+          *matRowDef="let element; columns: columnNamesToDisplay()"
+          cdkDrag
+          [cdkDragData]="element"
+          [cdkDragDisabled]="tableOptions().reorder !== true"
+          class="element-row"
+          [class.expanded-row]="isExpanded(element)"
+          (click)="toggleExpand(element)"></tr>
+
+        @if (tableOptions().expandableRows === true) {
+          <!-- Expanded Content Column - The detail row is made up of this one column that spans across all columns -->
+          <tr mat-row *matRowDef="let row; columns: ['expandedDetail']" class="detail-row"></tr>
+        }
+
+        <!-- Row shown when there is no matching data. -->
+        @if (!loading()) {
+          <tr class="element-row" *matNoDataRow>
+            <td class="mdc-data-table__cell" style="text-align: center" [attr.colspan]="columnNamesToDisplay().length">
+              No data matching the filter
+            </td>
+          </tr>
+        }
+      </table>
+    </div>
+
+    <div class="paginator-container mat-mdc-paginator">
+      @if (tableOptions().jumpToPage === true) {
+        <div class="mat-mdc-paginator-page-size-label">Go to page:</div>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="paginator-page-select">
+          <mat-select
+            [value]="paginator?.pageIndex ?? 0"
+            (selectionChange)="jumpToPage($event.source)"
+            hideSingleSelectionIndicator>
+            @for (pageNumber of getPageList(); track pageNumber) {
+              <mat-option [value]="pageNumber">{{ pageNumber + 1 }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+      <mat-paginator
+        [pageSizeOptions]="tableOptions().rowsPerPageOptions || [5, 10, 25]"
+        [pageSize]="tableOptions().rowsPerPage"
+        showFirstLastButtons
+        aria-label="Select page of periodic elements">
+      </mat-paginator>
     </div>
   }
-
-  <table
-    mat-table
-    [dataSource]="dataSource"
-    matSort
-    class="mat-elevation-z8"
-    multiTemplateDataRows="tableOptions().expandableRows === true">
-    @for (column of columnsToDisplay(); track column) {
-      <ng-container matColumnDef="{{ column.name }}">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header disabled="{{ column.sort === false }}">
-          {{ column.label || column.name }}
-        </th>
-        <td mat-cell *matCellDef="let element">{{ element[column.name] }}</td>
-      </ng-container>
-    }
-
-    <!-- Expanded Content Column - The detail row is made up of this one column that spans across all columns -->
-    @if (tableOptions().expandableRows === true) {
-      <ng-container matColumnDef="expand">
-        <th mat-header-cell *matHeaderCellDef aria-label="row actions">&nbsp;</th>
-        <td mat-cell *matCellDef="let element">
-          <button
-            mat-icon-button
-            color="primary"
-            aria-label="expand row"
-            (click)="toggle(element); $event.stopPropagation()"
-            class="example-toggle-button"
-            [class.example-toggle-button-expanded]="isExpanded(element)">
-            <mat-icon>keyboard_arrow_down</mat-icon>
-          </button>
-        </td>
-      </ng-container>
-      <ng-container matColumnDef="expandedDetail">
-        <td mat-cell *matCellDef="let element" [attr.colspan]="columnNamesToDisplay().length">
-          <div
-            class="example-element-detail-wrapper"
-            [class.example-element-detail-wrapper-expanded]="isExpanded(element)">
-            <div class="example-element-detail">
-              <div class="example-element-diagram">
-                <div class="example-element-position">{{ element.position }}</div>
-                <div class="example-element-symbol">{{ element.symbol }}</div>
-                <div class="example-element-name">{{ element.name }}</div>
-                <div class="example-element-weight">{{ element.weight }}</div>
-              </div>
-              <div class="example-element-description">
-                {{ element.description }}
-                <span class="example-element-description-attribution"> -- Wikipedia </span>
-              </div>
-            </div>
-          </div>
-        </td>
-      </ng-container>
-    }
-
-    @if (rowActions().length > 0) {
-      <ng-container matColumnDef="rowActions">
-        <th mat-header-cell *matHeaderCellDef aria-label="row actions">&nbsp;</th>
-        <td mat-cell *matCellDef="let element; let i = dataIndex">
-          @for (action of rowActions(); track action) {
-            <button
-              mat-icon-button
-              color="accent"
-              [disabled]="action.disabled"
-              (click)="onRowActionClicked($event, action, element, i)">
-              <mat-icon>{{ action.icon }}</mat-icon>
-            </button>
-          }
-        </td>
-      </ng-container>
-    }
-
-    <tr mat-header-row *matHeaderRowDef="columnNamesToDisplay()"></tr>
-    <tr
-      mat-row
-      *matRowDef="let element; columns: columnNamesToDisplay()"
-      class="example-element-row"
-      [class.example-expanded-row]="isExpanded(element)"
-      (click)="toggleExpand(element)"></tr>
-
-    @if (tableOptions().expandableRows === true) {
-      <!-- Expanded Content Column - The detail row is made up of this one column that spans across all columns -->
-      <tr mat-row *matRowDef="let row; columns: ['expandedDetail']" class="example-detail-row"></tr>
-    }
-
-    <!-- Row shown when there is no matching data. -->
-    @if (!loading()) {
-      <tr class="example-element-row" *matNoDataRow>
-        <td class="mdc-data-table__cell" style="text-align: center" [attr.colspan]="columnNamesToDisplay().length">
-          No data matching the filter
-        </td>
-      </tr>
-    }
-  </table>
-
-  <div class="paginator-container mat-mdc-paginator">
-    @if (tableOptions().jumpToPage === true) {
-      <div class="mat-mdc-paginator-page-size-label">Go to page:</div>
-      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="paginator-page-select">
-        <mat-select
-          [value]="paginator?.pageIndex ?? 0"
-          (selectionChange)="jumpToPage($event.source)"
-          hideSingleSelectionIndicator>
-          @for (pageNumber of getPageList(); track pageNumber) {
-            <mat-option [value]="pageNumber">{{ pageNumber + 1 }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-    }
-    <mat-paginator
-      [pageSizeOptions]="tableOptions().rowsPerPageOptions || [5, 10, 25]"
-      [pageSize]="tableOptions().rowsPerPage"
-      showFirstLastButtons
-      aria-label="Select page of periodic elements">
-    </mat-paginator>
-  </div>
 </div>

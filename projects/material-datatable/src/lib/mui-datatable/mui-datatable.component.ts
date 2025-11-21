@@ -1,4 +1,5 @@
 // mui-datatable.component.ts
+import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
 import {
   ViewChild,
@@ -10,6 +11,10 @@ import {
   signal,
   DestroyRef,
   Directive,
+  ViewContainerRef,
+  ComponentRef,
+  createComponent,
+  EnvironmentInjector,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
@@ -24,6 +29,7 @@ import { MatSelectModule, MatSelect } from '@angular/material/select';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableModule, MatTable, MatTableDataSource } from '@angular/material/table';
 import { MatToolbarModule } from '@angular/material/toolbar';
+import { ExtendedComponentSchema } from '@formio/angular';
 import { FormDialogComponent, ActionDialogComponent, FormDialogData, ActionDialogData, DialogAction } from '../dialog';
 import { Action, ColumnDefinition, RowAction, TableOptions } from '../interfaces';
 import { FilterEntriesPipe } from '../pipes';
@@ -48,13 +54,14 @@ export const SHARE_IMPORTS = [
   SearchBarComponent,
   MatChipsModule,
   FilterEntriesPipe,
+  DragDropModule,
 ];
 
 const defaultTableOptions: TableOptions = {
   remote: false,
   searchPlaceholder: 'Type to filter...',
   rowsPerPageOptions: [5, 10, 25],
-  expandableRows: true,
+  expandableRows: false,
   customActions: [],
   customRowActions: [],
   rowsPerPage: 5,
@@ -75,11 +82,14 @@ export abstract class DataTableComponent<TModel extends DataModel> implements Af
   readonly columns = input.required<ColumnDefinition[]>();
   readonly options = input.required<TableOptions>();
   readonly tableOptions = computed(() => ({
+    filterForm: this.dataTableService.createDefaultFormInput(this.columns().filter(col => col.filter !== false)),
+    editForm: this.dataTableService.createDefaultFormInput(this.columns().filter(col => col.editable !== false)),
     ...defaultTableOptions,
     ...this.options(),
   }));
   readonly columnsToDisplay = computed(() => this.columns().filter(col => col.display !== false));
   readonly columnNamesToDisplay = computed(() => [
+    ...(this.tableOptions().reorder === true ? ['dragHandle'] : []),
     ...(this.tableOptions().expandableRows === true ? ['expand'] : []),
     ...this.columnsToDisplay().map(col => col.name),
     ...(this.rowActions().length > 0 ? ['rowActions'] : []),
@@ -145,6 +155,7 @@ export abstract class DataTableComponent<TModel extends DataModel> implements Af
 
   private readonly destroyRef = inject(DestroyRef);
   error = signal<string | null>(null).asReadonly();
+  componentError: string | null = null;
   loading = signal<boolean>(false).asReadonly();
   filters = signal<DataFilters>({ search: null, filter: null }).asReadonly();
 
@@ -153,7 +164,9 @@ export abstract class DataTableComponent<TModel extends DataModel> implements Af
   @ViewChild(MatTable) table!: MatTable<TModel>;
 
   dataSource = new MatTableDataSource<TModel>([]);
-  expandedElement!: TModel | null;
+  expandedElement = signal<TModel | null>(null);
+  expandedComponentRef?: ComponentRef<any>;
+  protected environmentInjector = inject(EnvironmentInjector);
 
   constructor(
     protected readonly dataTableService: DataTableService<TModel>,
@@ -170,6 +183,22 @@ export abstract class DataTableComponent<TModel extends DataModel> implements Af
 
   //#region State management
   private initializeComponent(): void {
+    try {
+      const filterableColumns = this.columns().filter(col => col.filter !== false);
+      this.dataTableService.validateFormInput(filterableColumns, this.tableOptions().filterForm);
+    } catch (error: any) {
+      this.componentError = `Error with FilterForm input: ${error.message}`;
+      return;
+    }
+
+    try {
+      const editableColumns = this.columns().filter(col => col.editable !== false);
+      this.dataTableService.validateFormInput(editableColumns, this.tableOptions().editForm);
+    } catch (error: any) {
+      this.componentError = `Error with EditForm input: ${error.message}`;
+      return;
+    }
+
     // Set the DataStoreService settings for filtering
     this.dataStoreService.setSettings({
       columns: this.columns(),
@@ -234,15 +263,61 @@ export abstract class DataTableComponent<TModel extends DataModel> implements Af
   //#region Feature: Expandable Rows
 
   isExpanded(element: TModel) {
-    return this.expandedElement === element;
+    return this.expandedElement() === element;
   }
 
   toggleExpand(element: TModel) {
-    this.expandedElement = this.isExpanded(element) ? null : element;
+    const newExpandedElement = this.isExpanded(element) ? null : element;
+    this.expandedElement.set(newExpandedElement);
   }
 
   toggle(element: TModel): void {
     this.toggleExpand(element);
+  }
+
+  getExpandedComponentInputs(element: TModel): Record<string, any> {
+    const inputs: Record<string, any> = {
+      data: element,
+    };
+
+    // Merge additional inputs if provided
+    const additionalInputs = this.tableOptions().expandableRowComponentInputs;
+    if (additionalInputs) {
+      Object.assign(inputs, additionalInputs);
+    }
+
+    return inputs;
+  }
+
+  createExpandedComponent(container: ViewContainerRef, element: TModel): void {
+    const componentType = this.tableOptions().expandableRowComponent;
+    if (!componentType) return;
+
+    // Clear any existing component
+    container.clear();
+    if (this.expandedComponentRef) {
+      this.expandedComponentRef.destroy();
+    }
+
+    // Create the component
+    this.expandedComponentRef = createComponent(componentType, {
+      environmentInjector: this.environmentInjector,
+      hostElement: container.element.nativeElement,
+    });
+
+    // Set the row data as input
+    this.expandedComponentRef.setInput('data', element);
+
+    // Set additional inputs if provided
+    const additionalInputs = this.tableOptions().expandableRowComponentInputs;
+    if (additionalInputs) {
+      Object.entries(additionalInputs).forEach(([key, value]) => {
+        this.expandedComponentRef!.setInput(key, value);
+      });
+    }
+
+    // Attach the component to the container
+    container.insert(this.expandedComponentRef.hostView);
   }
 
   //#endregion
@@ -275,8 +350,8 @@ export abstract class DataTableComponent<TModel extends DataModel> implements Af
   abstract deleteItem(item: TModel): void;
 
   openFilterDialog(): void {
-    const { filter = {} } = this.dataStoreService.filters();
-    const formComponents = this.dataTableService.buildFormComponents('filter');
+    const { filter } = this.dataStoreService.filters();
+    const formComponents = this.dataStoreService.settings()?.table.filterForm;
 
     this.openFormDialog({
       formComponents,
@@ -288,7 +363,7 @@ export abstract class DataTableComponent<TModel extends DataModel> implements Af
   }
 
   openAddEditDialog(item?: TModel): void {
-    const formComponents = this.dataTableService.buildFormComponents('edit');
+    const formComponents = this.dataStoreService.settings()?.table.editForm;
     const isEdit = !!item;
 
     this.openFormDialog({
@@ -297,12 +372,10 @@ export abstract class DataTableComponent<TModel extends DataModel> implements Af
       title: isEdit ? `Edit ${item.name}` : 'Add item',
       actionLabel: isEdit ? 'Save' : 'Add',
       onResult: ({ action, data }) => {
-        console.log('Dialog result action:', action, data, isEdit);
         if (action.type !== 'ok') {
           return;
         }
         if (isEdit && data.id) {
-          console.log(action, data, isEdit);
           this.updateItem(data);
         } else if (!isEdit) {
           this.addItem(data);
@@ -320,7 +393,7 @@ export abstract class DataTableComponent<TModel extends DataModel> implements Af
   }
 
   private openFormDialog(config: {
-    formComponents: any[];
+    formComponents: ExtendedComponentSchema[] | undefined;
     formValue: any;
     title: string;
     actionLabel: string;
@@ -393,6 +466,21 @@ export abstract class DataTableComponent<TModel extends DataModel> implements Af
 
   clearFilterEntries(): void {
     this.changeFilter({});
+  }
+  //#endregion
+
+  //#region Feature: Row Reordering
+  dropTable(event: CdkDragDrop<TModel[]>) {
+    if (this.tableOptions().reorder !== true) return;
+
+    const data = [...this.dataSource.data];
+    moveItemInArray(data, event.previousIndex, event.currentIndex);
+    this.dataSource.data = data;
+
+    // Update the data store if not in remote mode
+    if (!this.tableOptions().remote) {
+      this.dataStoreService.setData(data);
+    }
   }
   //#endregion
 

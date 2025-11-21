@@ -2,29 +2,37 @@ import { Inject, Injectable } from '@angular/core';
 import { catchError, finalize, Observable, throwError } from 'rxjs';
 import { ColumnDefinition } from '../interfaces';
 import { DataModel } from '../types';
+import { findAllValuesByKey } from '../utils';
 import { API_SERVICE_TOKEN, ApiService } from './api.service';
 import { DataFilters, DataPagination, DataSorting, DataStoreService } from './datastore.service';
 
-const defaultControlOption: object = {
+const defaultFormInput = {
   type: 'textfield',
+  input: true,
 };
 
 export abstract class DataTableService<TModel extends DataModel> {
   constructor(protected readonly dataStoreService: DataStoreService<TModel>) {}
 
-  buildFormComponents(type: 'filter' | 'edit') {
-    const settings = this.dataStoreService.$settings();
-    const columns = settings?.columns || [];
-    const filteredColumns = type === 'filter' ? columns.filter(column => column.filter !== false) : columns;
-
-    return filteredColumns.map(col => ({
-      key: col.name,
-      label: col.label || col.name,
-      ...(type === 'filter'
-        ? col.filterOptions?.formioOptions || defaultControlOption
-        : col.editOptions?.formioOptions || defaultControlOption),
-    }));
+  createDefaultFormInput(columns: ColumnDefinition[]): Record<string, any>[] {
+    return columns.map(col => {
+      return {
+        ...defaultFormInput,
+        key: col.name,
+        label: col.label || col.name,
+      };
+    });
   }
+
+  validateFormInput(columns: ColumnDefinition[], formInput: Record<string, any>[]) {
+    const requiredColumns = columns.map(col => col.name);
+    const keys = findAllValuesByKey(formInput, 'key');
+    const missingColumns = requiredColumns.filter(colName => !keys.includes(colName));
+    if (missingColumns.length > 0) {
+      throw new Error(`Missing definitions for the following columns: ${missingColumns.join(', ')}`);
+    }
+  }
+
   private generateCsvContent(columnConfig: ColumnDefinition[], data: TModel[]): string {
     const header = columnConfig.map(col => col.label || col.name).join(',') + '\n';
     const rows = data
@@ -39,6 +47,7 @@ export abstract class DataTableService<TModel extends DataModel> {
       .join('\n');
     return header + rows;
   }
+
   exportToCsv(filename: string, columnConfig: ColumnDefinition[], data: TModel[]) {
     const csvContent = this.generateCsvContent(columnConfig, data);
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
