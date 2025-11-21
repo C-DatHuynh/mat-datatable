@@ -1,6 +1,6 @@
 {
   "name": "material-datatable",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A comprehensive Angular Material datatable library with advanced features",
   "keywords": [
     "angular",
@@ -9,7 +9,7 @@
     "table",
     "components"
   ],
-  "author": "Your Name",
+  "author": "Dat Huynh",
   "license": "MIT",
   "repository": {
     "type": "git",
