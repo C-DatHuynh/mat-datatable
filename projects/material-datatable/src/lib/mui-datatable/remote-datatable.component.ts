@@ -6,7 +6,7 @@ import { DataModel } from '../types';
 import { DataTableComponent, SHARE_IMPORTS } from './mui-datatable.component';
 
 @Component({
-  selector: 'app-mui-datatable',
+  selector: 'app-remote-mui-datatable',
   templateUrl: './mui-datatable.component.html',
   styleUrls: ['./mui-datatable.component.scss'],
   standalone: true,
