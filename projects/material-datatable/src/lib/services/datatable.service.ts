@@ -11,7 +11,7 @@ const defaultFormInput = {
   input: true,
 };
 
-export abstract class DataTableService<TModel extends DataModel> {
+export abstract class DataTableService<TModel> {
   constructor(protected readonly dataStoreService: DataStoreService<TModel>) {}
 
   createDefaultFormInput(columns: ColumnDefinition[]): Record<string, any>[] {
@@ -106,9 +106,9 @@ export abstract class DataTableService<TModel extends DataModel> {
 
     printWindow.document.close();
   }
-  abstract updateItem(item: TModel): void;
+  abstract updateItem(index: number, item: TModel): void;
   abstract addItem(item: TModel): void;
-  abstract deleteItem(id: string | number): void;
+  abstract deleteItem(index: number, item: TModel): void;
 }
 
 @Injectable()
@@ -117,17 +117,17 @@ export class BasicDataTableService<TModel extends DataModel> extends DataTableSe
     super(dataStoreService);
   }
 
-  updateItem(item: TModel): void {
-    this.dataStoreService.updateDataItem(item.id, item);
+  updateItem(index: number, item: TModel): void {
+    this.dataStoreService.updateDataItem(index, item);
   }
 
   addItem(item: TModel): void {
     // Generate a temporary ID for new items if they don't have one
-    this.dataStoreService.addDataItem('', item);
+    this.dataStoreService.addDataItem(item);
   }
 
-  deleteItem(id: string | number): void {
-    this.dataStoreService.removeDataItem(id);
+  deleteItem(index: number, item: TModel): void {
+    this.dataStoreService.removeDataItem(index);
   }
 }
 
@@ -184,24 +184,19 @@ export class RemoteDataTableService<TModel extends DataModel> extends BasicDataT
 
   override addItem(item: TModel): void {
     this.callApi(this.apiService.add(item), true).subscribe((createdItem: TModel) => {
-      this.dataStoreService.addDataItem(createdItem.id, createdItem);
+      this.dataStoreService.addDataItem(createdItem);
     });
   }
 
-  override deleteItem(id: string | number): void {
-    this.callApi(this.apiService.remove(id), true).subscribe(() => {
-      this.dataStoreService.removeDataItem(id);
+  override deleteItem(index: number, item: TModel): void {
+    this.callApi(this.apiService.remove(item), true).subscribe(() => {
+      this.dataStoreService.removeDataItem(index);
     });
   }
 
-  override updateItem(item: TModel): void {
-    // Remove id from the update payload as required by the API
-    const { id, ...updatePayload } = item;
-    this.callApi(
-      this.apiService.update(item.id, updatePayload as Exclude<TModel, { id: string | number }>),
-      true
-    ).subscribe(updatedItem => {
-      this.dataStoreService.updateDataItem(updatedItem.id, updatedItem);
+  override updateItem(index: number, item: TModel): void {
+    this.callApi(this.apiService.update(item), true).subscribe(updatedItem => {
+      this.dataStoreService.updateDataItem(index, updatedItem);
     });
   }
 }

@@ -53,12 +53,12 @@ export class RemoteDataTableComponent<TModel extends DataModel>
     this.remoteDataTableService.addItem(item);
   }
 
-  updateItem(item: TModel): void {
-    this.remoteDataTableService.updateItem(item);
+  updateItem(index: number, item: TModel): void {
+    this.remoteDataTableService.updateItem(index, item);
   }
 
-  deleteItem(item: TModel): void {
-    this.remoteDataTableService.deleteItem(item.id);
+  deleteItem(index: number, item: TModel): void {
+    this.remoteDataTableService.deleteItem(index, item);
   }
 
   override subscribeToState(): void {

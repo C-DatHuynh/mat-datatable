@@ -54,11 +54,11 @@ export class BasicDataTableComponent<TModel extends DataModel> extends DataTable
     this.onAddItem.emit(item);
   }
 
-  updateItem(item: TModel): void {
+  updateItem(index: number, item: TModel): void {
     this.onUpdateItem.emit(item);
   }
 
-  deleteItem(item: TModel): void {
+  deleteItem(index: number, item: TModel): void {
     this.onDeleteItem.emit(item);
   }
 }
