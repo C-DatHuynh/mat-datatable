@@ -6,7 +6,7 @@ export interface SelectOptionType {
 
 export interface DataModel {
   id: number | string;
-  name: string;
+  name?: string;
 }
 
 export interface FilterPayload {
