@@ -1,5 +1,6 @@
 import { Type } from '@angular/core';
 import { ExtendedComponentSchema } from '@formio/angular';
+import { Form } from '@formio/js';
 import { Action, RowAction } from './action';
 
 export interface TableOptions {
@@ -26,4 +27,5 @@ export interface TableOptions {
   canDelete?: boolean; // Show Delete button
   canFilter?: boolean; // Show Filter button
   reorder?: boolean; // Enable drag & drop row reordering
+  formioOptions?: Form['options']; // Global Form.io options
 }

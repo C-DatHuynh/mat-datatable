@@ -46,7 +46,7 @@ class PeriodicElementService extends ApiService<PeriodicElement> {
   protected override baseUrl = 'https://example.com/api/elements';
   override list(): Observable<PeriodicElement[]> {
     console.log('API Service list called');
-    return of(ELEMENT_DATA).pipe(delay(1000));
+    return of(ELEMENT_DATA).pipe(delay(500));
   }
   override remove(id: string | number): Observable<void> {
     console.log(`API Service remove called for id: ${id}`);
@@ -87,6 +87,8 @@ export const WithRemotePaginationAndSorting: Story = {
     title: 'Material Datatable with Remote Pagination and Sorting',
     options: { ...tableOptions, remote: true },
     columns: columns,
+    apiResult: (result: boolean | Error) =>
+      alert(result instanceof Error ? `Error: ${result.message}` : 'API called successful'),
   },
   decorators: [
     applicationConfig({

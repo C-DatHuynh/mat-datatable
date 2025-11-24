@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, Inject, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { ExtendedComponentSchema, FormioForm } from '@formio/angular';
-import { FormRendererComponent, FormSubmissionData } from '../formio';
+import { ExtendedComponentSchema } from '@formio/angular';
+import { FormRendererComponent } from '../formio';
 import { PrimitiveType } from '../types';
 import { BaseDialogComponent, DialogAction, DialogOptions } from './base-dialog.component';
 
@@ -22,8 +22,8 @@ export interface FormDialogData {
     <app-base-dialog [options]="dialogOptions" (actionDone)="onAction($event)">
       <app-form-renderer
         #dialogForm
-        [form]="formOptions"
-        [submission]="formValue"
+        [formConfig]="formConfig"
+        [formData]="formValue"
         (formSubmit)="onSubmit($event)"></app-form-renderer>
     </app-base-dialog>
   `,
@@ -32,9 +32,9 @@ export interface FormDialogData {
   standalone: true,
 })
 export class FormDialogComponent {
-  formOptions!: FormioForm;
+  formConfig!: ExtendedComponentSchema[];
   dialogOptions!: DialogOptions;
-  formValue!: { data: Record<string, any> };
+  formValue!: Record<string, any>;
   columns!: number;
 
   @ViewChild(FormRendererComponent) dialogForm!: FormRendererComponent;
@@ -44,8 +44,8 @@ export class FormDialogComponent {
     @Inject(MAT_DIALOG_DATA) readonly data: FormDialogData
   ) {
     this.columns = this.data.columns;
-    this.formOptions = { type: 'form', components: this.data.formComponents };
-    this.formValue = { data: this.data.formValue || {} };
+    this.formConfig = this.data.formComponents;
+    this.formValue = this.data.formValue;
     this.dialogOptions = { title: this.data.title, actions: this.data.actions, showCloseButton: true };
   }
 
@@ -58,7 +58,7 @@ export class FormDialogComponent {
     }
   }
 
-  onSubmit(data: FormSubmissionData): void {
-    this.dialogRef.close({ action: { type: 'ok' }, data: data.data });
+  onSubmit(data: Record<string, any>): void {
+    this.dialogRef.close({ action: { type: 'ok' }, data });
   }
 }

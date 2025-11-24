@@ -1,21 +1,10 @@
 <div class="form-renderer-container">
-  <div class="form-content" [ngClass]="{ 'read-only': options?.readOnly }">
+  <div class="form-content">
     <formio
       [form]="form"
-      [submission]="submission"
       [options]="formioOptions"
-      [readOnly]="options?.readOnly || false"
-      (submit)="onFormSubmit($event)"
-      (change)="onFormChange($event)"
-      (error)="onFormError($event)"></formio>
-  </div>
-
-  <div *ngIf="validationErrors.length > 0" class="validation-errors">
-    <h4>Validation Errors:</h4>
-    <ul>
-      <li *ngFor="let error of validationErrors" class="error-item">
-        {{ error.message }}
-      </li>
-    </ul>
+      [submission]="data"
+      (ready)="onLoad($event)"
+      (change)="onChange($event)"></formio>
   </div>
 </div>

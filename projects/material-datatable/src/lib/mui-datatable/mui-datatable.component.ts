@@ -153,7 +153,7 @@ export abstract class DataTableComponent<TModel extends DataModel> implements Af
   });
   //#endregion
 
-  private readonly destroyRef = inject(DestroyRef);
+  protected readonly destroyRef = inject(DestroyRef);
   error = signal<string | null>(null).asReadonly();
   componentError: string | null = null;
   loading = signal<boolean>(false).asReadonly();
