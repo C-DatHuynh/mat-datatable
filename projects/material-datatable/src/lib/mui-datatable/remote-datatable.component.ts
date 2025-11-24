@@ -1,4 +1,4 @@
-import { Component, effect, input, output } from '@angular/core';
+import { Component, effect, input, output, AfterViewInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatDialog } from '@angular/material/dialog';
 import { ColumnDefinition, TableOptions } from '../interfaces';
@@ -14,7 +14,10 @@ import { DataTableComponent, SHARE_IMPORTS } from './mui-datatable.component';
   imports: SHARE_IMPORTS,
   providers: [RemoteDataTableService, DataStoreService],
 })
-export class RemoteDataTableComponent<TModel extends DataModel> extends DataTableComponent<TModel> {
+export class RemoteDataTableComponent<TModel extends DataModel>
+  extends DataTableComponent<TModel>
+  implements AfterViewInit
+{
   override readonly title = input.required<string>();
   override readonly columns = input.required<ColumnDefinition[]>();
   override readonly options = input.required<TableOptions>();
@@ -27,6 +30,15 @@ export class RemoteDataTableComponent<TModel extends DataModel> extends DataTabl
     protected override dialogService: MatDialog
   ) {
     super(remoteDataTableService, dataStoreService, notificationService, dialogService);
+  }
+
+  override ngAfterViewInit(): void {
+    super.ngAfterViewInit();
+
+    // Subscribe to apiResult after component is fully initialized
+    this.remoteDataTableService.apiResult.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(result => {
+      this.apiResult.emit(result as boolean | Error);
+    });
   }
 
   loadInitialData(): void {
@@ -51,9 +63,7 @@ export class RemoteDataTableComponent<TModel extends DataModel> extends DataTabl
 
   override subscribeToState(): void {
     super.subscribeToState();
-    this.remoteDataTableService.apiResult.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(result => {
-      this.apiResult.emit(result as boolean | Error);
-    });
+
     effect(() => {
       const pagination = this.dataStoreService.pagination();
       const sorting = this.dataStoreService.sorting();

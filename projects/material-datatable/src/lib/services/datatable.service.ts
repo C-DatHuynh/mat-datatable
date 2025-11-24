@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
-import { BehaviorSubject, catchError, finalize, Observable, throwError } from 'rxjs';
+import { BehaviorSubject, catchError, finalize, Observable, tap, throwError } from 'rxjs';
 import { ColumnDefinition } from '../interfaces';
 import { DataModel } from '../types';
 import { findAllValuesByKey } from '../utils';
@@ -142,13 +142,20 @@ export class RemoteDataTableService<TModel extends DataModel> extends BasicDataT
     super(dataStoreService);
   }
 
-  callApi<T>(apiCall: Observable<T>): Observable<T> {
+  callApi<T>(apiCall: Observable<T>, emitResult: boolean = false): Observable<T> {
     this.dataStoreService.setLoading(true);
     this.dataStoreService.clearError();
 
     return apiCall.pipe(
+      tap(() => {
+        if (emitResult) {
+          this.apiResult.next(true);
+        }
+      }),
       catchError(error => {
-        this.apiResult.next(error);
+        if (emitResult) {
+          this.apiResult.next(error);
+        }
         const errorMsg = error?.message || 'An error occurred';
         this.dataStoreService.setError(errorMsg);
         console.error('API Error:', error);
@@ -161,11 +168,13 @@ export class RemoteDataTableService<TModel extends DataModel> extends BasicDataT
   }
 
   populateAllItems(): void {
-    this.callApi(this.apiService.list()).subscribe((resources: TModel[]) => this.dataStoreService.setData(resources));
+    this.callApi(this.apiService.list(), false).subscribe((resources: TModel[]) =>
+      this.dataStoreService.setData(resources)
+    );
   }
 
   populateItems(pagination: DataPagination | null, filter: DataFilters | null, sorting: DataSorting | null): void {
-    this.callApi(this.apiService.listRemote(pagination, filter, sorting)).subscribe(
+    this.callApi(this.apiService.listRemote(pagination, filter, sorting), false).subscribe(
       (result: { data: TModel[]; total: number }) => {
         this.dataStoreService.setData(result.data);
         this.dataStoreService.setTotalItems(result.total);
@@ -174,13 +183,13 @@ export class RemoteDataTableService<TModel extends DataModel> extends BasicDataT
   }
 
   override addItem(item: TModel): void {
-    this.callApi(this.apiService.add(item)).subscribe((createdItem: TModel) => {
+    this.callApi(this.apiService.add(item), true).subscribe((createdItem: TModel) => {
       this.dataStoreService.addDataItem(createdItem.id, createdItem);
     });
   }
 
   override deleteItem(id: string | number): void {
-    this.callApi(this.apiService.remove(id)).subscribe(() => {
+    this.callApi(this.apiService.remove(id), true).subscribe(() => {
       this.dataStoreService.removeDataItem(id);
     });
   }
@@ -188,10 +197,11 @@ export class RemoteDataTableService<TModel extends DataModel> extends BasicDataT
   override updateItem(item: TModel): void {
     // Remove id from the update payload as required by the API
     const { id, ...updatePayload } = item;
-    this.callApi(this.apiService.update(item.id, updatePayload as Exclude<TModel, { id: string | number }>)).subscribe(
-      updatedItem => {
-        this.dataStoreService.updateDataItem(updatedItem.id, updatedItem);
-      }
-    );
+    this.callApi(
+      this.apiService.update(item.id, updatePayload as Exclude<TModel, { id: string | number }>),
+      true
+    ).subscribe(updatedItem => {
+      this.dataStoreService.updateDataItem(updatedItem.id, updatedItem);
+    });
   }
 }
