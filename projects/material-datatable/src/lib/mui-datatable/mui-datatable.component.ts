@@ -76,7 +76,7 @@ const defaultTableOptions: TableOptions = {
 };
 
 @Directive()
-export abstract class DataTableComponent<TModel extends DataModel> implements AfterViewInit {
+export abstract class DataTableComponent<TModel> implements AfterViewInit {
   //#region Signals
   readonly title = input.required<string>();
   readonly columns = input.required<ColumnDefinition[]>();
@@ -129,24 +129,20 @@ export abstract class DataTableComponent<TModel extends DataModel> implements Af
   });
   readonly rowActions = computed(() => {
     const allActions: RowAction[] = [];
-    const getTrueIndex = (index: number) => {
-      if (!this.paginator) return index;
-      const { pageIndex } = this.paginator;
-      return pageIndex > 0 ? pageIndex * this.paginator.pageSize + index : index;
-    };
     const { canEdit, canDelete, customRowActions = [] } = this.tableOptions();
     if (canEdit) {
       allActions.push({
-        label: 'Edit',
+        label: '',
         icon: 'edit',
         onClick: (item: object, index: number) => this.openAddEditDialog(item as TModel),
       });
     }
     if (canDelete) {
       allActions.push({
-        label: 'Delete',
+        label: '',
         icon: 'delete',
-        onClick: (item: object, index: number) => this.openDeleteConfirmDialog(item as TModel, getTrueIndex(index)),
+        color: 'warn',
+        onClick: (item: object, index: number) => this.openDeleteConfirmDialog(item as TModel),
       });
     }
     return [...customRowActions, ...allActions];
@@ -154,6 +150,7 @@ export abstract class DataTableComponent<TModel extends DataModel> implements Af
   //#endregion
 
   protected readonly destroyRef = inject(DestroyRef);
+  selectedIndex = signal<number | null>(null);
   error = signal<string | null>(null).asReadonly();
   componentError: string | null = null;
   loading = signal<boolean>(false).asReadonly();
@@ -253,8 +250,7 @@ export abstract class DataTableComponent<TModel extends DataModel> implements Af
   }
 
   private updateTableData(data: TModel[]): void {
-    const tableData: TModel[] = data.filter(resource => resource && resource.id); // Filter out null/undefined resources
-    this.dataSource.data = tableData;
+    this.dataSource.data = data;
   }
 
   abstract loadInitialData(): void;
@@ -346,8 +342,8 @@ export abstract class DataTableComponent<TModel extends DataModel> implements Af
 
   abstract changeFilter(data: any): void;
   abstract addItem(item: TModel): void;
-  abstract updateItem(item: TModel): void;
-  abstract deleteItem(item: TModel): void;
+  abstract updateItem(index: number, item: TModel): void;
+  abstract deleteItem(index: number, item: TModel): void;
 
   openFilterDialog(): void {
     const { filter } = this.dataStoreService.filters();
@@ -369,14 +365,15 @@ export abstract class DataTableComponent<TModel extends DataModel> implements Af
     this.openFormDialog({
       formComponents,
       formValue: item,
-      title: isEdit ? `Edit ${item.name}` : 'Add item',
+      title: isEdit ? `Edit item` : 'Add item',
       actionLabel: isEdit ? 'Save' : 'Add',
       onResult: ({ action, data }) => {
-        if (action.type !== 'ok') {
+        const selectedIndex = this.selectedIndex();
+        if (action.type !== 'ok' || selectedIndex === null) {
           return;
         }
         if (isEdit && data.id) {
-          this.updateItem(data);
+          this.updateItem(selectedIndex, data);
         } else if (!isEdit) {
           this.addItem(data);
         }
@@ -384,11 +381,15 @@ export abstract class DataTableComponent<TModel extends DataModel> implements Af
     });
   }
 
-  openDeleteConfirmDialog(item: TModel, index: number): void {
+  openDeleteConfirmDialog(item: TModel): void {
+    const selectedIndex = this.selectedIndex();
+    if (selectedIndex === null) {
+      return;
+    }
     this.openActionDialog({
-      title: `Delete ${item.name}`,
+      title: '',
       message: 'Are you sure you want to delete this item?',
-      onResult: action => (action.type === 'ok' ? this.deleteItem(item) : null),
+      onResult: action => (action.type === 'ok' ? this.deleteItem(selectedIndex, item) : null),
     });
   }
 
@@ -485,8 +486,15 @@ export abstract class DataTableComponent<TModel extends DataModel> implements Af
   //#endregion
 
   onRowActionClicked(event: Event, action: RowAction, item: TModel, index: number): void {
+    const getTrueIndex = (index: number) => {
+      if (!this.paginator) return index;
+      const { pageIndex } = this.paginator;
+      return pageIndex > 0 ? pageIndex * this.paginator.pageSize + index : index;
+    };
     event.stopPropagation();
-    action.onClick(item, index);
+    const trueIndex = getTrueIndex(index);
+    this.selectedIndex.set(trueIndex);
+    action.onClick(item as object, trueIndex);
   }
 
   //#region Helper

@@ -13,6 +13,7 @@ export interface ColumnDefinition {
   name: string;
   label?: string;
   display?: boolean;
+  getDisplayValue?: (data: any) => string;
   filter?: boolean;
   filterLogic?: FilterLogic;
   editable?: boolean;

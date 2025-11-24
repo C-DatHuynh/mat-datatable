@@ -12,8 +12,8 @@ export interface ApiServiceInterface<T> {
     sorting: DataSorting | null
   ): Observable<{ data: T[]; total: number }>;
   add(dto: T): Observable<T>;
-  update(id: number | string, dto: Exclude<T, { id: number | string }>): Observable<T>;
-  remove(id: number | string): Observable<void>;
+  update(dto: T): Observable<T>;
+  remove(dto: T): Observable<void>;
 }
 
 export const API_SERVICE_TOKEN = new InjectionToken<ApiServiceInterface<any>>('ApiService');
@@ -24,11 +24,16 @@ export class ApiService<T> implements ApiServiceInterface<T> {
     'Content-Type': 'application/json',
   });
   protected baseUrl: string = '';
+  protected idField: string = 'id';
 
   constructor(private readonly http: HttpClient) {}
 
   setBaseUrl(url: string): void {
     this.baseUrl = url;
+  }
+
+  setIdField(idField: string): void {
+    this.idField = idField;
   }
 
   setHeaders(header: HttpHeaders): void {
@@ -51,18 +56,20 @@ export class ApiService<T> implements ApiServiceInterface<T> {
     return this.http.post<T>(this.baseUrl, dto, { headers: this.headers });
   }
 
-  update(id: number | string, dto: Exclude<T, { id: number | string }>): Observable<T> {
+  update(dto: T): Observable<T> {
+    const { [this.idField as keyof T]: id } = dto;
     return this.http.put<T>(`${this.baseUrl}/${id}`, dto, { headers: this.headers });
   }
 
-  remove(id: number | string): Observable<void> {
+  remove(dto: T): Observable<void> {
+    const { [this.idField as keyof T]: id } = dto;
     return this.http.delete<void>(`${this.baseUrl}/${id}`, { headers: this.headers });
   }
 }
 
 type UseClassOption<T> = { useClass: Type<ApiServiceInterface<T>> };
-type UseBaseUrlOption<T> = { useBaseUrl: string };
-export type ApiServiceOptions<T> = UseClassOption<T> | UseBaseUrlOption<T> | { useExternalData: true };
+type UseCustomOption = { useCustomOption: { baseUrl: string; idField: string } };
+export type ApiServiceOptions<T> = UseClassOption<T> | UseCustomOption | { useExternalData: true };
 
 export function provideApiService<T>(options: ApiServiceOptions<T>) {
   let providers: Provider[] = [];
@@ -80,13 +87,13 @@ export function provideApiService<T>(options: ApiServiceOptions<T>) {
         deps: [HttpClient],
       },
     ];
-  } else if ('useBaseUrl' in options) {
+  } else if ('useCustomOption' in options) {
     providers = [
       {
         provide: API_SERVICE_TOKEN,
         useFactory: (http: HttpClient) => {
           const service = new ApiService<T>(http);
-          service.setBaseUrl(options.useBaseUrl);
+          service.setBaseUrl(options.useCustomOption.baseUrl);
           return service;
         },
         deps: [HttpClient],

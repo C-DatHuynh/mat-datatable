@@ -1,6 +1,5 @@
 import { computed, Injectable, signal } from '@angular/core';
 import { ColumnDefinition, TableOptions } from '../interfaces';
-import { DataModel } from '../types';
 import { isNonEmpty } from '../utils';
 
 export interface DataFilters {
@@ -28,7 +27,7 @@ export interface DataStoreSettings {
 @Injectable({
   providedIn: 'root',
 })
-export class DataStoreService<T extends DataModel> {
+export class DataStoreService<T> {
   //#region Signals
   $data = signal<T[]>([]);
   $totalItems = signal<number>(0);
@@ -146,52 +145,54 @@ export class DataStoreService<T extends DataModel> {
     this.$totalItems.set(total);
   }
 
-  addDataItem(id: string | number, item: T): void {
-    this.$data.update(currentData => [...currentData, { ...item, id }]);
+  addDataItem(item: T): void {
+    this.$data.update(currentData => [...currentData, item]);
   }
 
-  updateDataItem(id: string | number, updates: Partial<T>): void {
+  updateDataItem(index: number, item: T): void {
     this.$data.update(currentData => {
-      const updatedData = currentData.map(item => (item.id === id ? { ...item, ...updates } : item));
+      const updatedData = currentData.map((currentItem, i) =>
+        i === index ? { ...currentItem, ...item } : currentItem
+      );
       return updatedData;
     });
   }
 
-  removeDataItem(id: string | number): void {
+  removeDataItem(index: number): void {
     this.$data.update(currentData => {
-      const filteredData = currentData.filter(item => item.id !== id);
+      const filteredData = currentData.filter((_, i) => i !== index);
       return filteredData;
     });
   }
   //#endregion
 
-  //#region Actions - Selection
+  // //#region Actions - Selection
 
-  setSelectedItem(item: T | null): void {
-    this.$selectedItem.set(item);
-  }
+  // setSelectedItem(item: T | null): void {
+  //   this.$selectedItem.set(item);
+  // }
 
-  setSelectedItems(items: T[]): void {
-    this.$selectedItems.set(items);
-  }
+  // setSelectedItems(items: T[]): void {
+  //   this.$selectedItems.set(items);
+  // }
 
-  addSelectedItem(item: T): void {
-    const currentSelected = this.$selectedItems();
-    if (!currentSelected.find(selected => selected.id === item.id)) {
-      this.$selectedItems.update(() => [...currentSelected, item]);
-    }
-  }
+  // addSelectedItem(item: T): void {
+  //   const currentSelected = this.$selectedItems();
+  //   if (!currentSelected.find(selected => selected.id === item.id)) {
+  //     this.$selectedItems.update(() => [...currentSelected, item]);
+  //   }
+  // }
 
-  removeSelectedItem(id: string): void {
-    const currentSelected = this.$selectedItems();
-    const filteredSelected = currentSelected.filter(item => item.id !== id);
-    this.$selectedItems.update(() => filteredSelected);
-  }
+  // removeSelectedItem(id: string): void {
+  //   const currentSelected = this.$selectedItems();
+  //   const filteredSelected = currentSelected.filter(item => item.id !== id);
+  //   this.$selectedItems.update(() => filteredSelected);
+  // }
 
-  clearSelection(): void {
-    this.setSelectedItems([]);
-  }
-  //#endregion
+  // clearSelection(): void {
+  //   this.setSelectedItems([]);
+  // }
+  // //#endregion
 
   //#region Actions - Filters
 
@@ -227,7 +228,7 @@ export class DataStoreService<T extends DataModel> {
         const filterValue = filter[name as keyof typeof filter] as any;
         const itemValue = data[name as keyof T];
         if (filterLogic) {
-          return filterLogic(itemValue, filterValue, data);
+          return filterLogic(itemValue, filterValue, data as object);
         }
         return itemValue === filterValue || (Array.isArray(filterValue) && filterValue.includes(itemValue));
       });

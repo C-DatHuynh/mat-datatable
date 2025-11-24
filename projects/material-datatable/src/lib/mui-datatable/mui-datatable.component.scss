@@ -246,3 +246,21 @@ table.reorderable {
 ::ng-deep .mat-form-field {
   font-size: 14px;
 }
+
+.row-action-button {
+  height: 30px;
+}
+
+.action-button-container {
+  display: flex;
+  flex-direction: row;
+  gap: 5px;
+  height: 100%;
+}
+
+.row-action-button-container {
+  display: flex;
+  flex-direction: row;
+  gap: 5px;
+  height: 100%;
+}

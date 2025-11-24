@@ -48,8 +48,8 @@ class PeriodicElementService extends ApiService<PeriodicElement> {
     console.log('API Service list called');
     return of(ELEMENT_DATA).pipe(delay(500));
   }
-  override remove(id: string | number): Observable<void> {
-    console.log(`API Service remove called for id: ${id}`);
+  override remove(item: PeriodicElement): Observable<void> {
+    console.log(`API Service remove called for id: ${item.id}`);
     return of(undefined).pipe(delay(500));
   }
 }
