@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
-import { catchError, finalize, Observable, throwError } from 'rxjs';
+import { BehaviorSubject, catchError, finalize, Observable, throwError } from 'rxjs';
 import { ColumnDefinition } from '../interfaces';
 import { DataModel } from '../types';
 import { findAllValuesByKey } from '../utils';
@@ -133,6 +133,8 @@ export class BasicDataTableService<TModel extends DataModel> extends DataTableSe
 
 @Injectable()
 export class RemoteDataTableService<TModel extends DataModel> extends BasicDataTableService<TModel> {
+  apiResult = new BehaviorSubject<boolean | Error>(true);
+
   constructor(
     dataStoreService: DataStoreService<TModel>,
     @Inject(API_SERVICE_TOKEN) private readonly apiService: ApiService<TModel>
@@ -146,6 +148,7 @@ export class RemoteDataTableService<TModel extends DataModel> extends BasicDataT
 
     return apiCall.pipe(
       catchError(error => {
+        this.apiResult.next(error);
         const errorMsg = error?.message || 'An error occurred';
         this.dataStoreService.setError(errorMsg);
         console.error('API Error:', error);

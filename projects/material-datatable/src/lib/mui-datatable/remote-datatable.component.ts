@@ -1,4 +1,5 @@
-import { Component, effect, input } from '@angular/core';
+import { Component, effect, input, output } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatDialog } from '@angular/material/dialog';
 import { ColumnDefinition, TableOptions } from '../interfaces';
 import { DataStoreService, NotificationService, RemoteDataTableService } from '../services';
@@ -17,6 +18,7 @@ export class RemoteDataTableComponent<TModel extends DataModel> extends DataTabl
   override readonly title = input.required<string>();
   override readonly columns = input.required<ColumnDefinition[]>();
   override readonly options = input.required<TableOptions>();
+  apiResult = output<boolean | Error>();
 
   constructor(
     private remoteDataTableService: RemoteDataTableService<TModel>,
@@ -49,6 +51,9 @@ export class RemoteDataTableComponent<TModel extends DataModel> extends DataTabl
 
   override subscribeToState(): void {
     super.subscribeToState();
+    this.remoteDataTableService.apiResult.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(result => {
+      this.apiResult.emit(result as boolean | Error);
+    });
     effect(() => {
       const pagination = this.dataStoreService.pagination();
       const sorting = this.dataStoreService.sorting();
