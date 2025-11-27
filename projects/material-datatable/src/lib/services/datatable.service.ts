@@ -1,7 +1,6 @@
 import { Inject, Injectable } from '@angular/core';
 import { BehaviorSubject, catchError, finalize, Observable, tap, throwError } from 'rxjs';
 import { ColumnDefinition } from '../interfaces';
-import { DataModel } from '../types';
 import { findAllValuesByKey } from '../utils';
 import { API_SERVICE_TOKEN, ApiService } from './api.service';
 import { DataFilters, DataPagination, DataSorting, DataStoreService } from './datastore.service';
@@ -112,7 +111,7 @@ export abstract class DataTableService<TModel> {
 }
 
 @Injectable()
-export class BasicDataTableService<TModel extends DataModel> extends DataTableService<TModel> {
+export class BasicDataTableService<TModel> extends DataTableService<TModel> {
   constructor(dataStoreService: DataStoreService<TModel>) {
     super(dataStoreService);
   }
@@ -132,7 +131,7 @@ export class BasicDataTableService<TModel extends DataModel> extends DataTableSe
 }
 
 @Injectable()
-export class RemoteDataTableService<TModel extends DataModel> extends BasicDataTableService<TModel> {
+export class RemoteDataTableService<TModel> extends BasicDataTableService<TModel> {
   apiResult = new BehaviorSubject<boolean | Error>(true);
 
   constructor(

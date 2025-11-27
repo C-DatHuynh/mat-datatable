@@ -138,7 +138,7 @@ export abstract class DataTableComponent<TModel> implements AfterViewInit {
       defaultActions.push({
         label: '',
         icon: 'edit',
-        onClick: (item?: object, index?: number) => this.openAddEditDialog(item as TModel),
+        onClick: (item?: object, index?: number) => this.openAddEditDialog(item as TModel, true),
       });
     }
     if (canDelete) {
@@ -363,9 +363,8 @@ export abstract class DataTableComponent<TModel> implements AfterViewInit {
     });
   }
 
-  openAddEditDialog(item?: TModel): void {
+  openAddEditDialog(item?: TModel, isEdit: boolean = false): void {
     const formComponents = this.dataStoreService.settings()?.table.editForm;
-    const isEdit = !!item;
 
     this.openFormDialog({
       formComponents,
@@ -377,7 +376,7 @@ export abstract class DataTableComponent<TModel> implements AfterViewInit {
         if (action.type !== 'ok' || selectedIndex === null) {
           return;
         }
-        if (isEdit && data.id) {
+        if (isEdit) {
           this.updateItem(selectedIndex, data);
         } else if (!isEdit) {
           this.addItem(data);
@@ -428,7 +427,7 @@ export abstract class DataTableComponent<TModel> implements AfterViewInit {
     });
   }
 
-  private openActionDialog(config: { title: string; message: string; onResult: (action: DialogAction) => void }): void {
+  openActionDialog(config: { title: string; message: string; onResult: (action: DialogAction) => void }): void {
     const dialogRef = this.dialogService.open(ActionDialogComponent, {
       data: {
         title: config.title,

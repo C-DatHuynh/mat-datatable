@@ -3,7 +3,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatDialog } from '@angular/material/dialog';
 import { ColumnDefinition, TableOptions } from '../interfaces';
 import { DataStoreService, NotificationService, RemoteDataTableService } from '../services';
-import { DataModel } from '../types';
 import { DataTableComponent, SHARE_IMPORTS } from './mui-datatable.component';
 
 @Component({
@@ -14,10 +13,7 @@ import { DataTableComponent, SHARE_IMPORTS } from './mui-datatable.component';
   imports: SHARE_IMPORTS,
   providers: [RemoteDataTableService, DataStoreService],
 })
-export class RemoteDataTableComponent<TModel extends DataModel>
-  extends DataTableComponent<TModel>
-  implements AfterViewInit
-{
+export class RemoteDataTableComponent<TModel> extends DataTableComponent<TModel> implements AfterViewInit {
   override readonly title = input.required<string>();
   override readonly columns = input.required<ColumnDefinition[]>();
   override readonly options = input.required<TableOptions>();
