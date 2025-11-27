@@ -50,3 +50,41 @@ export const findAllValuesByKey = (root: object, targetKey: string) => {
 export function deepClone<T>(obj: T): T {
   return JSON.parse(JSON.stringify(obj));
 }
+
+export const groupBy = <T, K extends keyof any>(array: T[], getKey: keyof T | ((item: T) => K)): Record<K, T[]> => {
+  return array.reduce(
+    (result, item) => {
+      const key = typeof getKey === 'function' ? getKey(item) : item[getKey];
+      if (!result[key as K]) {
+        result[key as K] = [];
+      }
+      result[key as K].push(item);
+      return result;
+    },
+    {} as Record<K, T[]>
+  );
+};
+
+export function splitByDuplicateKey<T>(arr: T[], key: keyof T) {
+  const countMap = {} as Record<keyof T, number>;
+
+  // Count occurrences
+  for (const item of arr) {
+    const val = item[key] as keyof T;
+    countMap[val] = (countMap[val] || 0) + 1;
+  }
+
+  const duplicates = [];
+  const unique = [];
+
+  // Split into duplicates or unique
+  for (const item of arr) {
+    if (countMap[item[key] as keyof T] > 1) {
+      duplicates.push(item);
+    } else {
+      unique.push(item);
+    }
+  }
+
+  return { duplicates, unique };
+}
