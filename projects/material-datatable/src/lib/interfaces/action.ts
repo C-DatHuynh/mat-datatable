@@ -12,6 +12,7 @@ export interface RowAction {
   label?: string;
   icon?: string;
   color?: ButtonColor;
-  onClick: (data: object, rowIndex: number) => void;
-  disabled?: (data: object, rowIndex: number) => boolean;
+  showInline?: boolean;
+  onClick: (data?: object, rowIndex?: number) => void;
+  disabled?: (data?: object, rowIndex?: number) => boolean;
 }

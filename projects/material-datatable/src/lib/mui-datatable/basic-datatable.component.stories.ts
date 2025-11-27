@@ -56,7 +56,13 @@ const tableOptions: TableOptions = {
       label: 'Assign user',
       icon: 'person_add',
       color: 'primary',
-      onClick: (data: object, rowIndex: number) => alert(`Assign user to row ${rowIndex}`),
+      onClick: (data?: object, rowIndex?: number) => alert(`Assign user to row ${rowIndex}`),
+    },
+    {
+      label: 'Assign user 2',
+      icon: 'person_add',
+      color: 'primary',
+      onClick: (data?: object, rowIndex?: number) => alert(`Assign user to row ${rowIndex}`),
     },
   ],
 };

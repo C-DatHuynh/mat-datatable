@@ -2,7 +2,6 @@ import { Component, effect, input, output } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ColumnDefinition, TableOptions } from '../interfaces';
 import { BasicDataTableService, DataStoreService, NotificationService } from '../services';
-import { DataModel } from '../types';
 import { DataTableComponent, SHARE_IMPORTS } from './mui-datatable.component';
 
 @Component({
@@ -13,7 +12,7 @@ import { DataTableComponent, SHARE_IMPORTS } from './mui-datatable.component';
   imports: SHARE_IMPORTS,
   providers: [BasicDataTableService, DataStoreService],
 })
-export class BasicDataTableComponent<TModel extends DataModel> extends DataTableComponent<TModel> {
+export class BasicDataTableComponent<TModel> extends DataTableComponent<TModel> {
   readonly data = input.required<TModel[]>();
   override readonly title = input.required<string>();
   override readonly columns = input.required<ColumnDefinition[]>();

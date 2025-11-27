@@ -23,6 +23,7 @@ import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule, MatSelect } from '@angular/material/select';
@@ -36,7 +37,7 @@ import { FilterEntriesPipe } from '../pipes';
 import { SearchBarComponent } from '../search-bar/search-bar.component';
 import { DataStoreService, DataTableService, NotificationService } from '../services';
 import { DataFilters } from '../services/datastore.service';
-import { DataModel } from '../types';
+import { groupBy, splitByDuplicateKey } from '../utils';
 
 export const SHARE_IMPORTS = [
   CommonModule,
@@ -55,6 +56,7 @@ export const SHARE_IMPORTS = [
   MatChipsModule,
   FilterEntriesPipe,
   DragDropModule,
+  MatMenuModule,
 ];
 
 const defaultTableOptions: TableOptions = {
@@ -92,7 +94,7 @@ export abstract class DataTableComponent<TModel> implements AfterViewInit {
     ...(this.tableOptions().reorder === true ? ['dragHandle'] : []),
     ...(this.tableOptions().expandableRows === true ? ['expand'] : []),
     ...this.columnsToDisplay().map(col => col.name),
-    ...(this.rowActions().length > 0 ? ['rowActions'] : []),
+    ...(this.uniqueRowActions().length > 0 || this.duplicateRowActions().length > 0 ? ['rowActions'] : []),
   ]);
   readonly actions = computed(() => {
     const allActions: Action[] = [];
@@ -127,25 +129,28 @@ export abstract class DataTableComponent<TModel> implements AfterViewInit {
     }
     return [...allActions, ...customActions];
   });
+  readonly uniqueRowActions = computed(() => this.rowActions().unique);
+  readonly duplicateRowActions = computed(() => Object.entries(groupBy(this.rowActions().duplicates, 'icon')));
   readonly rowActions = computed(() => {
-    const allActions: RowAction[] = [];
+    const defaultActions: RowAction[] = [];
     const { canEdit, canDelete, customRowActions = [] } = this.tableOptions();
     if (canEdit) {
-      allActions.push({
+      defaultActions.push({
         label: '',
         icon: 'edit',
-        onClick: (item: object, index: number) => this.openAddEditDialog(item as TModel),
+        onClick: (item?: object, index?: number) => this.openAddEditDialog(item as TModel, true),
       });
     }
     if (canDelete) {
-      allActions.push({
+      defaultActions.push({
         label: '',
         icon: 'delete',
         color: 'warn',
-        onClick: (item: object, index: number) => this.openDeleteConfirmDialog(item as TModel),
+        onClick: (item?: object, index?: number) => this.openDeleteConfirmDialog(item as TModel),
       });
     }
-    return [...customRowActions, ...allActions];
+    const allActions = [...customRowActions, ...defaultActions].filter(action => !action.disabled?.());
+    return splitByDuplicateKey(allActions, 'icon');
   });
   //#endregion
 
@@ -358,9 +363,8 @@ export abstract class DataTableComponent<TModel> implements AfterViewInit {
     });
   }
 
-  openAddEditDialog(item?: TModel): void {
+  openAddEditDialog(item?: TModel, isEdit: boolean = false): void {
     const formComponents = this.dataStoreService.settings()?.table.editForm;
-    const isEdit = !!item;
 
     this.openFormDialog({
       formComponents,
@@ -372,7 +376,7 @@ export abstract class DataTableComponent<TModel> implements AfterViewInit {
         if (action.type !== 'ok' || selectedIndex === null) {
           return;
         }
-        if (isEdit && data.id) {
+        if (isEdit) {
           this.updateItem(selectedIndex, data);
         } else if (!isEdit) {
           this.addItem(data);
@@ -387,13 +391,13 @@ export abstract class DataTableComponent<TModel> implements AfterViewInit {
       return;
     }
     this.openActionDialog({
-      title: '',
+      title: 'Delete Confirmation',
       message: 'Are you sure you want to delete this item?',
       onResult: action => (action.type === 'ok' ? this.deleteItem(selectedIndex, item) : null),
     });
   }
 
-  private openFormDialog(config: {
+  openFormDialog(config: {
     formComponents: ExtendedComponentSchema[] | undefined;
     formValue: any;
     title: string;
@@ -423,7 +427,7 @@ export abstract class DataTableComponent<TModel> implements AfterViewInit {
     });
   }
 
-  private openActionDialog(config: { title: string; message: string; onResult: (action: DialogAction) => void }): void {
+  openActionDialog(config: { title: string; message: string; onResult: (action: DialogAction) => void }): void {
     const dialogRef = this.dialogService.open(ActionDialogComponent, {
       data: {
         title: config.title,
