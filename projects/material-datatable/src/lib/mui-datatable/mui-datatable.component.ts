@@ -368,7 +368,7 @@ export abstract class DataTableComponent<TModel> implements AfterViewInit {
 
     this.openFormDialog({
       formComponents,
-      formValue: item,
+      formValue: item || this.tableOptions().addFormDefaultValues,
       title: isEdit ? `Edit item` : 'Add item',
       actionLabel: isEdit ? 'Save' : 'Add',
       onResult: ({ action, data }) => {
