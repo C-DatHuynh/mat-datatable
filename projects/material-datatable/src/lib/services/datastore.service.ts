@@ -33,10 +33,6 @@ export class DataStoreService<T> {
   $totalItems = signal<number>(0);
   $selectedItem = signal<T | null>(null);
   $selectedItems = signal<T[]>([]);
-  $filters = signal<DataFilters>({
-    search: null,
-    filter: null,
-  });
   $pagination = signal<DataPagination>({
     page: null,
     pageSize: null,
@@ -47,6 +43,10 @@ export class DataStoreService<T> {
   $loading = signal<boolean>(false);
   $error = signal<string | null>(null);
   $settings = signal<DataStoreSettings | null>(null);
+  $filters = signal<DataFilters>({
+    search: null,
+    filter: this.settings()?.table.filterFormDefaultValues || null,
+  });
 
   $filteredData = computed(() => {
     const data = this.$data();

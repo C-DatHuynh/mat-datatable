@@ -18,6 +18,8 @@ export interface TableOptions {
   //selectableRowsOnClick?: boolean; // Allow row selection on click
   filterForm?: ExtendedComponentSchema[];
   editForm?: ExtendedComponentSchema[];
+  addFormDefaultValues?: object;
+  filterFormDefaultValues?: object;
   canSearch?: boolean; // Enable search functionality
   searchPlaceholder?: string;
   canAdd?: boolean; // Show Add button
