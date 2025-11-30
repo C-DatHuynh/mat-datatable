@@ -85,7 +85,9 @@
               {{ column.label || column.name }}
             </th>
             <td mat-cell *matCellDef="let element">
-              {{ column.getDisplayValue ? column.getDisplayValue(element) : element[column.name] }}
+              {{
+                column.getDisplayValue ? column.getDisplayValue(element[column.name], element) : element[column.name]
+              }}
             </td>
           </ng-container>
         }
