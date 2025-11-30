@@ -185,10 +185,10 @@
         }
 
         <!-- Row shown when there is no matching data. -->
-        @if (!loading()) {
-          <tr class="element-row" *matNoDataRow>
+        @if (!loading() && dataSource.data.length === 0) {
+          <tr class="element-row">
             <td class="mdc-data-table__cell" style="text-align: center" [attr.colspan]="columnNamesToDisplay().length">
-              No data matching the filter
+              No data available.
             </td>
           </tr>
         }
