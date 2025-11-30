@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { applicationConfig, type Meta, type StoryObj } from '@storybook/angular';
 import { delay, Observable, of } from 'rxjs';
 import { ColumnDefinition, TableOptions } from '../interfaces';
-import { ApiService, provideApiService } from '../services';
+import { ApiService, provideApiService, provideApiServiceGlobal } from '../services';
 import { DataFilters, DataPagination, DataSorting } from '../services/datastore.service';
 import { ELEMENT_DATA, PeriodicElement } from '../stories/fixture';
 import { RemoteDataTableComponent } from './remote-datatable.component';
@@ -62,7 +62,7 @@ export const WithCustomApiService: Story = {
   },
   decorators: [
     applicationConfig({
-      providers: [provideApiService({ useClass: PeriodicElementService })],
+      providers: [provideApiServiceGlobal({ useClass: PeriodicElementService })],
     }),
   ],
 };
@@ -92,7 +92,7 @@ export const WithRemotePaginationAndSorting: Story = {
   },
   decorators: [
     applicationConfig({
-      providers: [provideApiService({ useClass: RemotePeriodicElementService })],
+      providers: [provideApiServiceGlobal({ useClass: RemotePeriodicElementService })],
     }),
   ],
 };

@@ -102,5 +102,10 @@ export function provideApiService<T>(options: ApiServiceOptions<T>) {
   } else {
     throw new Error('Invalid ApiServiceOptions provided.');
   }
+  return providers;
+}
+
+export function provideApiServiceGlobal<T>(options: ApiServiceOptions<T>) {
+  const providers = provideApiService<T>(options);
   return makeEnvironmentProviders([provideHttpClient(), ...providers]);
 }
