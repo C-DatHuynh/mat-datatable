@@ -43,16 +43,16 @@
     @if ((filters().filter || {} | filterEntries).length > 0) {
       <section class="filter-chips">
         <span class="filter-chips-label">Active filters:</span>
-        <mat-chip-grid>
+        <mat-chip-set>
           @for (keyword of filters().filter || {} | filterEntries; track keyword) {
-            <mat-chip-row (removed)="removeFilterEntry(keyword)">
+            <mat-chip (removed)="removeFilterEntry(keyword)">
               {{ keyword[0] }}={{ keyword[1] }}
               <button matChipRemove [attr.aria-label]="'remove template form' + keyword">
                 <mat-icon>cancel</mat-icon>
               </button>
-            </mat-chip-row>
+            </mat-chip>
           }
-        </mat-chip-grid>
+        </mat-chip-set>
         <button mat-stroked-button (click)="clearFilterEntries()" class="clear-filters-btn">
           <mat-icon>clear_all</mat-icon>
           Clear filters
