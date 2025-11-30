@@ -372,11 +372,11 @@ export abstract class DataTableComponent<TModel> implements AfterViewInit {
       title: isEdit ? `Edit item` : 'Add item',
       actionLabel: isEdit ? 'Save' : 'Add',
       onResult: ({ action, data }) => {
-        const selectedIndex = this.selectedIndex();
-        if (action.type !== 'ok' || selectedIndex === null) {
+        if (action.type !== 'ok') {
           return;
         }
-        if (isEdit) {
+        const selectedIndex = this.selectedIndex();
+        if (isEdit && selectedIndex !== null) {
           this.updateItem(selectedIndex, data);
         } else if (!isEdit) {
           this.addItem(data);
