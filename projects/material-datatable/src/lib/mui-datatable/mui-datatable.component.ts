@@ -61,7 +61,7 @@ export const SHARE_IMPORTS = [
 
 const defaultTableOptions: TableOptions = {
   remote: false,
-  searchPlaceholder: 'Type to filter...',
+  searchPlaceholder: 'Type to search...',
   rowsPerPageOptions: [5, 10, 25],
   expandableRows: false,
   customActions: [],

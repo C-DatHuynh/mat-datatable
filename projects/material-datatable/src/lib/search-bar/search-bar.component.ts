@@ -11,7 +11,6 @@ import { MatInputModule } from '@angular/material/input';
   imports: [CommonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatButtonModule],
   template: `
     <mat-form-field appearance="outline" class="search-field" subscriptSizing="dynamic">
-      <mat-label>Search</mat-label>
       <input
         matInput
         (keyup.enter)="onSearch($event)"
