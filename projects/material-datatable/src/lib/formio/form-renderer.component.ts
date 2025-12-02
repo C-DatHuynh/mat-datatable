@@ -33,6 +33,8 @@ export class FormRendererComponent {
       const currentData = this.formData();
       if (currentData) {
         this.data = { data: deepClone(currentData) };
+      } else {
+        this.data = { data: {} };
       }
     });
     effect(() => {
