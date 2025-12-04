@@ -30,6 +30,7 @@ import { MatSelectModule, MatSelect } from '@angular/material/select';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableModule, MatTable, MatTableDataSource } from '@angular/material/table';
 import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { ExtendedComponentSchema } from '@formio/angular';
 import { FormDialogComponent, ActionDialogComponent, FormDialogData, ActionDialogData, DialogAction } from '../dialog';
 import { Action, ColumnDefinition, RowAction, TableOptions } from '../interfaces';
@@ -57,6 +58,7 @@ export const SHARE_IMPORTS = [
   FilterEntriesPipe,
   DragDropModule,
   MatMenuModule,
+  MatTooltipModule,
 ];
 
 const defaultTableOptions: TableOptions = {
@@ -137,6 +139,7 @@ export abstract class DataTableComponent<TModel> implements AfterViewInit {
     if (canEdit) {
       defaultActions.push({
         label: '',
+        tooltip: 'Edit',
         icon: 'edit',
         onClick: (item?: object, index?: number) => this.openAddEditDialog(item as TModel, true),
       });
@@ -144,6 +147,7 @@ export abstract class DataTableComponent<TModel> implements AfterViewInit {
     if (canDelete) {
       defaultActions.push({
         label: '',
+        tooltip: 'Delete',
         icon: 'delete',
         color: 'warn',
         onClick: (item?: object, index?: number) => this.openDeleteConfirmDialog(item as TModel),
