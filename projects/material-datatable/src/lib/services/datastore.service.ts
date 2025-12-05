@@ -215,7 +215,9 @@ export class DataStoreService<T> {
   private textSearch(data: T, columns: ColumnDefinition[], search: string): boolean {
     const searchTerms = search.trim().toLowerCase();
     return columns.some(column => {
-      const itemValue = data[column.name as keyof T];
+      const itemValue = column.getDisplayValue
+        ? column.getDisplayValue(data[column.name as keyof T], data as object)
+        : data[column.name as keyof T];
       return `${itemValue}`.toLowerCase().includes(searchTerms);
     });
   }

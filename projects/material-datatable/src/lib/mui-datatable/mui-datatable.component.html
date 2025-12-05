@@ -30,6 +30,7 @@
             <button
               class="action-button"
               mat-raised-button
+              [matTooltip]="action.tooltip"
               [color]="action.color || 'primary'"
               [disabled]="action.disabled"
               (click)="action.onClick()">
@@ -145,19 +146,24 @@
                 @for (action of uniqueRowActions(); track action) {
                   <button
                     class="row-action-button"
-                    mat-icon-button
+                    [matTooltip]="action.tooltip"
+                    mat-button
                     [color]="action.color || 'accent'"
                     (click)="onRowActionClicked($event, action, element, i)">
                     <mat-icon>{{ action.icon }}</mat-icon>
+                    {{ action.label }}
                   </button>
                 }
                 @for (actionItem of duplicateRowActions(); track actionItem) {
-                  <button mat-icon-button [matMenuTriggerFor]="menu">
+                  <button class="row-action-button mat-accent" mat-button [matMenuTriggerFor]="menu">
                     <mat-icon>{{ actionItem[0] }}</mat-icon>
                   </button>
                   <mat-menu #menu="matMenu">
                     @for (action of actionItem[1]; track action) {
-                      <button mat-menu-item (click)="onRowActionClicked($event, action, element, i)">
+                      <button
+                        [matTooltip]="action.tooltip"
+                        mat-menu-item
+                        (click)="onRowActionClicked($event, action, element, i)">
                         <span>{{ action.label }}</span>
                       </button>
                     }

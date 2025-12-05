@@ -14,6 +14,8 @@ import { DataTableComponent, SHARE_IMPORTS } from './mui-datatable.component';
 })
 export class BasicDataTableComponent<TModel> extends DataTableComponent<TModel> {
   readonly data = input.required<TModel[]>();
+  readonly isLoading = input<boolean>(false);
+
   override readonly title = input.required<string>();
   override readonly columns = input.required<ColumnDefinition[]>();
   override readonly options = input.required<TableOptions>();
@@ -37,6 +39,10 @@ export class BasicDataTableComponent<TModel> extends DataTableComponent<TModel> 
     effect(() => {
       const data = this.data();
       this.dataStoreService.setData(data || []);
+    });
+    effect(() => {
+      const isLoading = this.isLoading();
+      this.dataStoreService.setLoading(isLoading);
     });
   }
 
