@@ -153,7 +153,7 @@ export abstract class DataTableComponent<TModel> implements AfterViewInit {
         onClick: (item?: object, index?: number) => this.openDeleteConfirmDialog(item as TModel),
       });
     }
-    const allActions = [...customRowActions, ...defaultActions].filter(action => !action.disabled?.());
+    const allActions = [...customRowActions, ...defaultActions];
     return splitByDuplicateKey(allActions, 'icon');
   });
   //#endregion
