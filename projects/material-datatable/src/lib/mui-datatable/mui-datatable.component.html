@@ -143,8 +143,8 @@
             <th mat-header-cell *matHeaderCellDef aria-label="row actions">&nbsp;</th>
             <td mat-cell *matCellDef="let element; let i = dataIndex">
               <div class="row-action-button-container">
-                @for (action of uniqueRowActions(); track action) {
-                  @if (!action.disabled?.(element)) {
+                @for (action of uniqueRowActions(); track action.label) {
+                  @if (!action.disabled?.(element, i)) {
                     <button
                       class="row-action-button"
                       [matTooltip]="action.tooltip"
@@ -161,8 +161,8 @@
                     <mat-icon>{{ actionItem[0] }}</mat-icon>
                   </button>
                   <mat-menu #menu="matMenu">
-                    @for (action of actionItem[1]; track action) {
-                      @if (!action.disabled?.(element)) {
+                    @for (action of actionItem[1]; track action.label) {
+                      @if (!action.disabled?.(element, i)) {
                         <button
                           [matTooltip]="action.tooltip"
                           mat-menu-item
