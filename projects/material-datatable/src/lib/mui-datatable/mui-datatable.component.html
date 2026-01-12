@@ -144,15 +144,17 @@
             <td mat-cell *matCellDef="let element; let i = dataIndex">
               <div class="row-action-button-container">
                 @for (action of uniqueRowActions(); track action) {
-                  <button
-                    class="row-action-button"
-                    [matTooltip]="action.tooltip"
-                    mat-button
-                    [color]="action.color || 'accent'"
-                    (click)="onRowActionClicked($event, action, element, i)">
-                    <mat-icon>{{ action.icon }}</mat-icon>
-                    {{ action.label }}
-                  </button>
+                  @if (!action.disabled?.(element)) {
+                    <button
+                      class="row-action-button"
+                      [matTooltip]="action.tooltip"
+                      mat-button
+                      [color]="action.color || 'accent'"
+                      (click)="onRowActionClicked($event, action, element, i)">
+                      <mat-icon>{{ action.icon }}</mat-icon>
+                      {{ action.label }}
+                    </button>
+                  }
                 }
                 @for (actionItem of duplicateRowActions(); track actionItem) {
                   <button class="row-action-button mat-accent" mat-button [matMenuTriggerFor]="menu">
@@ -160,12 +162,14 @@
                   </button>
                   <mat-menu #menu="matMenu">
                     @for (action of actionItem[1]; track action) {
-                      <button
-                        [matTooltip]="action.tooltip"
-                        mat-menu-item
-                        (click)="onRowActionClicked($event, action, element, i)">
-                        <span>{{ action.label }}</span>
-                      </button>
+                      @if (!action.disabled?.(element)) {
+                        <button
+                          [matTooltip]="action.tooltip"
+                          mat-menu-item
+                          (click)="onRowActionClicked($event, action, element, i)">
+                          <span>{{ action.label }}</span>
+                        </button>
+                      }
                     }
                   </mat-menu>
                 }
