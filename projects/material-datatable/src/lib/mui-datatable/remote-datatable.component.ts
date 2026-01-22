@@ -72,12 +72,12 @@ export class RemoteDataTableComponent<TModel> extends DataTableComponent<TModel>
   }
 
   loadRemoteData(): void {
-    if (!this.dataStoreService.settings()?.table.remote) {
-      return;
-    }
     const pagination = this.dataStoreService.pagination();
     const sorting = this.dataStoreService.sorting();
     const filter = this.dataStoreService.filters();
-    this.remoteDataTableService.populateItems(pagination, filter, sorting);
+    const settings = this.dataStoreService.settings();
+    if (settings?.table.remote) {
+      this.remoteDataTableService.populateItems(pagination, filter, sorting);
+    }
   }
 }
